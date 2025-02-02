@@ -56,15 +56,15 @@
               </ul>
             </div>
           </details>
-          </div>
+        </div>
         <a href="https://github.com/haruharu-1105/MagicPaletteAnalyzer" target="_blank" rel="noopener"
-          class="text-blue-500 hover:underline">GitHub</a>
+        class="text-blue-500 hover:underline">GitHub</a>
         <!-- テーマ切替ボタン -->
         <button id="theme-toggle" class="p-2 border rounded focus:outline-none">
           Toggle Theme
         </button>
-        </div>
-        </div>
+      </div>
+    </div>
   </header>
   <!-- ページ全体のレイアウト：サイドバーとメインコンテンツ -->
   <div class="flex pt-24">
@@ -670,8 +670,8 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
     }
   });
   
-    // 「一番上にスクロール」ボタンのクリックでスムーズスクロール
-    uiElements.scrollToTopButton.addEventListener('click', () => {
+  // 「一番上にスクロール」ボタンのクリックでスムーズスクロール
+  uiElements.scrollToTopButton.addEventListener('click', () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
   
@@ -729,32 +729,25 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
       a.click();
     }
   });
+
   // -------------------------------
   // テーマ切替・初期表示処理
   // -------------------------------
-    let currentMode = 'light';
-  const body = document.body;
-    const setTheme = (mode) => {
-    if (mode === 'dark') {
-      body.classList.add('dark');
-      body.classList.remove('bg-gray-100');
-      body.classList.add('bg-gray-900');
-      // ボタン名称とテキスト色の変更（ダークモード時は「ライトモードへ」にして白文字）
-      uiElements.themeToggleBtn.innerText = "☀️ライトモードへ";
-      uiElements.themeToggleBtn.classList.remove("text-black");
-      uiElements.themeToggleBtn.classList.add("text-white");
-    } else {
-      body.classList.remove('dark');
-      body.classList.remove('bg-gray-900');
-      body.classList.add('bg-gray-100');
-      // ボタン名称とテキスト色の変更（ライトモード時は「ダークモードへ」にして黒文字）
-      uiElements.themeToggleBtn.innerText = "🌙ダークモードへ";
-      uiElements.themeToggleBtn.classList.remove("text-white");
-      uiElements.themeToggleBtn.classList.add("text-black");
-    }
+  function setTheme (mode) {
+    const body = document.body;
+    const isDark = mode === 'dark';
+    
+    body.classList.toggle('dark', isDark);
+    body.classList.toggle('bg-gray-900', isDark);
+    body.classList.toggle('bg-gray-100', !isDark);
+    // ボタン名称とテキスト色の変更（ダークモード時は「ライトモードへ」にして白文字）
+    uiElements.themeToggleBtn.innerText = isDark ? "☀️ライトモードへ" : "🌙ダークモードへ";
+    uiElements.themeToggleBtn.classList.toggle('text-white', isDark);
+    uiElements.themeToggleBtn.classList.toggle('text-black', !isDark);
     localStorage.setItem('theme', mode);
-  };
-
+  }
+  
+  let currentMode = 'light';
   const storedTheme = localStorage.getItem('theme');
   if (storedTheme) {
     currentMode = storedTheme;
