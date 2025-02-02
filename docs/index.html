@@ -20,9 +20,9 @@
   <meta property="og:description" content="画像に潜む色の精霊を16色の魔法陣に封じ込め。瞳の輝きから風景の息吹まで、あらゆる画像を色彩錬金術で再構築。術師のためのパレット生成儀式。">
   <meta name="google" content="notranslate">
 </head>
-<body class="bg-gray-100 text-black mx-4 w-full dark:bg-gray-900 dark:text-white">
+<body class="bg-gray-100 text-[#1a1a1a] dark:text-[#e0e0e0] mx-4 w-full dark:bg-gray-900">
   <!-- 固定ヘッダー -->
-  <header class="fixed top-0 left-0 w-full shadow z-50 dark:text-white">
+  <header class="fixed top-0 left-0 w-full shadow z-50 dark:text-[#e0e0e0]">
     <!-- ヘッダー上部：タイトル・バージョン、GitHubリンク、テーマ切替 -->
     <div class="flex items-center justify-between px-4 py-4">
       <div>
@@ -42,7 +42,7 @@
     <div class="ml-4">
       <details class="border border-gray-300 px-4 py-4 rounded mt-2">
         <summary class="text-lg font-semibold cursor-pointer">使用方法</summary>
-        <div class="mt-2 text-gray-700">
+        <div class="mt-2">
           <p>1. 画像の読み込み</p>
           <ul class="list-disc list-inside ml-4">
             <li>a,「ファイルを選択」ボタンをクリックし、画像を選択します。</li>
@@ -61,11 +61,11 @@
     <!-- ページ全体のレイアウト：サイドバーとメインコンテンツ -->
     <div class="flex pt-24">
       <!-- 左側のサイドバー（固定） -->
-      <aside class="fixed left-0 top-32 w-40 h-full shadow dark:text-white">
+      <aside class="fixed left-0 top-32 w-40 h-full shadow dark:text-[#e0e0e0]">
         <!-- 現在選択色表示 -->
         <h2 class="text-xl font-bold m-4">現在選択色</h2>
         <div id="color-info" class="flex flex-col items-center">
-          <div id="color-display" class="w-20 h-20 border border-black dark:border-white mb-4"></div>
+          <div id="color-display" class="w-20 h-20 border border-[#1a1a1a] dark:border-[#e0e0e0] mb-4"></div>
           <div class="text-sm">
             <div>HEX: <span id="color-hex">#FFFFFF</span></div>
             <div>RGB: <span id="color-rgb">255, 255, 255</span></div>
@@ -74,7 +74,7 @@
         </div>
       </aside>
       <!-- メインコンテンツ -->
-      <main class="flex-1 ml-40 dark:text-white">
+      <main class="flex-1 ml-40 dark:text-[#e0e0e0]">
         <!-- コンテンツ全体（ヘッダー分の余白を確保） -->
         <div id="container" class="font-sans flex flex-col gap-2 my-8 max-w-full">
           <div id="image-container" class="border-2 border-dashed border-gray-300 " height="320px">
@@ -151,12 +151,12 @@
             </div>
             <!-- エラーメッセージ -->
             <div id="error-message"
-              class="fixed bottom-0 left-0 w-full bg-white p-2.5 text-center text-red-500 border-t border-gray-300">
+              class="fixed bottom-0 left-0 w-full bg-[#e0e0e0] p-2.5 text-center text-red-500 border-t border-gray-300">
             </div>
 
             <!-- 一番上に戻るボタン（初期状態は非表示） -->
             <button id="back-to-top"
-              class="fixed bottom-8 right-8 bg-blue-500 text-white px-4 py-2 rounded shadow-lg hidden hover:bg-blue-600">
+              class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shadow-lg hidden hover:bg-blue-600">
               一番上に戻る
             </button>
       </main>
@@ -641,16 +641,16 @@
           body.classList.add('dark');
           body.classList.remove('bg-gray-100');
           body.classList.add('bg-gray-900');
-          // ボタン名称とテキスト色の変更（ダークモード時は「ライトモード」にして白文字）
-          themeToggleBtn.innerText = "ライトモード";
+          // ボタン名称とテキスト色の変更（ダークモード時は「ライトモードへ」にして白文字）
+          themeToggleBtn.innerText = "☀️ライトモードへ";
           themeToggleBtn.classList.remove("text-black");
           themeToggleBtn.classList.add("text-white");
         } else {
           body.classList.remove('dark');
           body.classList.remove('bg-gray-900');
           body.classList.add('bg-gray-100');
-          // ボタン名称とテキスト色の変更（ライトモード時は「ダークモード」にして黒文字）
-          themeToggleBtn.innerText = "ダークモード";
+          // ボタン名称とテキスト色の変更（ライトモード時は「ダークモードへ」にして黒文字）
+          themeToggleBtn.innerText = "🌙ダークモードへ";
           themeToggleBtn.classList.remove("text-white");
           themeToggleBtn.classList.add("text-black");
         }
