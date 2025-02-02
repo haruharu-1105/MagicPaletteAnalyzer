@@ -32,39 +32,39 @@
   <!-- 固定ヘッダー -->
   <header class="fixed top-0 left-0 w-full shadow z-50 bg-white dark:text-[#e0e0e0] dark:bg-gray-800">
     <!-- ヘッダー上部：タイトル・バージョン、GitHubリンク、テーマ切替 -->
-    <div class="flex items-center justify-between px-4 py-4">
+    <div class="flex items-center justify-between px-4 py-2">
       <div>
-        <h1 class="text-2xl font-bold">MagicPaletteAnalyzer</h1>
+        <h1 class="text-2xl font-bold">MagicPaletteAnalyzer✨🎨🔍️</h1>
         <span class="text-sm text-gray-500 dark:text-white-500">ver 0.0.2</span>
       </div>
       <div class="flex items-center gap-4">
+        <!-- 使用方法（アコーディオン） -->
+        <div class="ml-4">
+          <details class="border border-gray-300 p-2 rounded">
+            <summary class="text-lg font-semibold cursor-pointer">📋使用方法</summary>
+            <div>
+              <p>1. 画像の読み込み</p>
+              <ul class="list-disc list-inside ml-4">
+                <li>a,「ファイルを選択」ボタンをクリックし、画像を選択します。</li>
+                <li>b,「ここに画像をドラッグ＆ドロップ」に画像をドロップします。</li>
+                <li>c, 画像をコピーした状態で「クリップボードから読み込む」ボタンをクリックします。</li>
+              </ul>
+              <p>2. パレットの内容確認：</p>
+              <ul class="list-disc list-inside ml-4">
+                <li>カラーパレットに分析された色が表示されます。</li>
+                <li>カラーヒストリーで選択した色の履歴を確認できます。</li>
+              </ul>
+            </div>
+          </details>
+          </div>
         <a href="https://github.com/haruharu-1105/MagicPaletteAnalyzer" target="_blank" rel="noopener"
-        class="text-blue-500 hover:underline">GitHub</a>
+          class="text-blue-500 hover:underline">GitHub</a>
         <!-- テーマ切替ボタン -->
         <button id="theme-toggle" class="p-2 border rounded focus:outline-none">
           Toggle Theme
         </button>
-      </div>
-    </div>
-    <!-- 使用方法（アコーディオン） -->
-    <div class="ml-4">
-      <details class="border border-gray-300 px-4 py-4 rounded mt-2">
-        <summary class="text-lg font-semibold cursor-pointer">使用方法</summary>
-        <div class="mt-2">
-          <p>1. 画像の読み込み</p>
-          <ul class="list-disc list-inside ml-4">
-            <li>a,「ファイルを選択」ボタンをクリックし、画像を選択します。</li>
-            <li>b,「ここに画像をドラッグ＆ドロップ」に画像をドロップします。</li>
-            <li>c, 画像をコピーした状態で「クリップボードから読み込む」ボタンをクリックします。</li>
-          </ul>
-          <p>2. パレットの内容確認：</p>
-          <ul class="list-disc list-inside ml-4">
-            <li>カラーパレットに分析された色が表示されます。</li>
-            <li>カラーヒストリーで選択した色の履歴を確認できます。</li>
-          </ul>
         </div>
-      </details>
-    </div>
+        </div>
   </header>
   <!-- ページ全体のレイアウト：サイドバーとメインコンテンツ -->
   <div class="flex pt-24">
@@ -84,7 +84,7 @@
     <!-- メインコンテンツ -->
     <main class="flex-1 ml-40 dark:text-[#e0e0e0] z-30">
       <!-- コンテンツ全体（ヘッダー分の余白を確保） -->
-      <div id="container" class="font-sans flex flex-col gap-2 my-8 max-w-full">
+      <div id="container" class="font-sans flex flex-col gap-2 max-w-full">
         <!-- キャンバスのコンテナ -->
         <div id="image-container" class="border-2 border-dashed border-gray-300 " height="320px">
           <div id="canvas-container" class="relative w-full max-w-2xl mx-auto">
@@ -732,10 +732,9 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
   // -------------------------------
   // テーマ切替・初期表示処理
   // -------------------------------
-  const urlParams = new URLSearchParams(window.location.search);
-  let currentMode = urlParams.get('mode') || 'light';
+    let currentMode = 'light';
   const body = document.body;
-  function setTheme(mode) {
+    const setTheme = (mode) => {
     if (mode === 'dark') {
       body.classList.add('dark');
       body.classList.remove('bg-gray-100');
@@ -754,9 +753,8 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
       uiElements.themeToggleBtn.classList.add("text-black");
     }
     localStorage.setItem('theme', mode);
-  }
-  
-  // 初期設定（URLパラメータおよびlocalStorageから取得）
+  };
+
   const storedTheme = localStorage.getItem('theme');
   if (storedTheme) {
     currentMode = storedTheme;
