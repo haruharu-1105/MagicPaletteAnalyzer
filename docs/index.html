@@ -5,7 +5,7 @@
   <title>✨MagicPaletteAnalyzer - 画像から色を召喚する魔導具 ver 0.0.2</title>
   <meta name="viewport" content="initial-scale=1.0,width=device-width,viewport-fit=cover">
   <meta name="description"
-    content="MagicPaletteAnalyzer - 画像に宿る色の精霊を可視化するカラーパレット生成ツール。瞳の色から風景まで、あらゆる画像を16色の魔方陣へ変換。術師のための色彩錬金術ツール。">
+  content="MagicPaletteAnalyzer - 画像に宿る色の精霊を可視化するカラーパレット生成ツール。瞳の色から風景まで、あらゆる画像を16色の魔方陣へ変換。術師のための色彩錬金術ツール。">
   <!-- Tailwind CSS CDN（簡易的な利用例） -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- TailwindCSSでdark modeを有効にするための設定例 -->
@@ -19,6 +19,13 @@
   <meta property="og:title" content="MagicPaletteAnalyzer">
   <meta property="og:description" content="画像に潜む色の精霊を16色の魔法陣に封じ込め。瞳の輝きから風景の息吹まで、あらゆる画像を色彩錬金術で再構築。術師のためのパレット生成儀式。">
   <meta name="google" content="notranslate">
+  #canvas-container {
+  position: relative;
+  }
+  
+  #color-preview {
+  transition: transform 0.1s ease-out;
+  }
 </head>
 <body class="bg-gray-100 text-[#1a1a1a] dark:text-[#e0e0e0] mx-4 w-full dark:bg-gray-900">
   <!-- 固定ヘッダー -->
@@ -31,7 +38,7 @@
       </div>
       <div class="flex items-center gap-4">
         <a href="https://github.com/haruharu-1105/MagicPaletteAnalyzer" target="_blank" rel="noopener"
-          class="text-blue-500 hover:underline">GitHub</a>
+        class="text-blue-500 hover:underline">GitHub</a>
         <!-- テーマ切替ボタン -->
         <button id="theme-toggle" class="p-2 border rounded focus:outline-none">
           Toggle Theme
@@ -56,241 +63,320 @@
           </ul>
         </div>
       </details>
-      </div>
-      </header>
+    </div>
+    </header>
     <!-- ページ全体のレイアウト：サイドバーとメインコンテンツ -->
     <div class="flex pt-24">
       <!-- 左側のサイドバー（固定） -->
-      <aside class="fixed left-0 top-32 w-40 h-full shadow dark:text-[#e0e0e0] z-40">
-        <!-- 現在選択色表示 -->
-        <h2 class="text-xl font-bold m-4">現在選択色</h2>
-        <div id="color-info" class="flex flex-col items-center">
-          <div id="color-display" class="w-20 h-20 border border-[#1a1a1a] dark:border-[#e0e0e0] mb-4"></div>
-          <div class="text-sm">
-            <div>HEX: <span id="color-hex">#FFFFFF</span></div>
-            <div>RGB: <span id="color-rgb">255, 255, 255</span></div>
-            <div>HSV: <span id="color-hsv">0, 0, 100</span></div>
-          </div>
+    <aside class="fixed left-0 top-32 w-40 h-full shadow dark:text-[#e0e0e0] z-30">
+      <!-- 現在選択色表示 -->
+      <h2 class="text-xl font-bold m-4">現在選択色</h2>
+      <div id="color-info" class="flex flex-col items-center">
+        <div id="color-display" class="w-20 h-20 border border-[#1a1a1a] dark:border-[#e0e0e0] mb-4"></div>
+        <div class="text-sm">
+          <div>HEX: <span id="color-hex">#FFFFFF</span></div>
+          <div>RGB: <span id="color-rgb">255, 255, 255</span></div>
+          <div>HSV: <span id="color-hsv">0, 0, 100</span></div>
         </div>
-      </aside>
-      <!-- メインコンテンツ -->
-      <main class="flex-1 ml-40 dark:text-[#e0e0e0] z-40">
-        <!-- コンテンツ全体（ヘッダー分の余白を確保） -->
-        <div id="container" class="font-sans flex flex-col gap-2 my-8 max-w-full">
-          <div id="image-container" class="border-2 border-dashed border-gray-300 " height="320px">
-            <!-- キャンバスエリア -->
-            <div id="canvas-area" class="mb-4">
-              <canvas id="image-canvas" height="320px"></canvas>
+      </div>
+    </aside>
+    <!-- メインコンテンツ -->
+    <main class="flex-1 ml-40 dark:text-[#e0e0e0] z-30">
+      <!-- コンテンツ全体（ヘッダー分の余白を確保） -->
+      <div id="container" class="font-sans flex flex-col gap-2 my-8 max-w-full">
+        <!-- キャンバスのコンテナ -->
+        <div id="image-container" class="border-2 border-dashed border-gray-300 " height="320px">
+          <div id="canvas-container" class="relative w-full max-w-2xl mx-auto">
+            <!-- キャンバス -->
+            <canvas id="image-canvas" class="block w-full"></canvas>
+          
+            <!-- ColorPreview（キャンバスの上に表示するレイヤー） -->
+            <div id="color-preview"
+              class="absolute hidden w-20 h-20 border-4 border-white rounded-full flex items-center justify-center font-bold text-lg text-white shadow-lg pointer-events-none z-40">
             </div>
-            <div class="flex items-center gap-3 mb-4">
-              <input type="file" id="file-input" accept="image/*" class="p-2 border border-gray-300 py-2 rounded">
-              <button id="paste-button"
-                class="px-16 bg-orange-500 rounded hover:bg-orange-600 text-nowrap h-12">クリップボードから📋
-              </button>
-              <div id="drop-area" class="w-full py-2.5 border-b-2 border-gray-400 bg-gray-50 text-center font-bold">
-                ここに画像をドラッグ＆ドロップ
-              </div>
+          
+          </div>
+          <div class="flex items-center gap-3 mb-4">
+            <input type="file" id="file-input" accept="image/*" class="p-2 border border-gray-300 py-2 rounded">
+          <button id="paste-button" class="px-16 bg-orange-500 rounded hover:bg-orange-600 text-nowrap h-12">クリップボードから📋
+          </button>
+          <div id="drop-area" class="w-full py-2.5 border-b-2 border-gray-400 bg-gray-50 text-center font-bold">
+            ここに画像をドラッグ＆ドロップ
+          </div>
+          </div>
+        
+      </div>
+      <!-- 画像のパレット表示 -->
+      <div id="palette" class="border border-gray-300 p-2.5">
+        <h3 class="text-lg font-semibold">🎨画像のパレット</h3>
+        <div id="palette-colors" class="grid gap-1 mt-2"
+          style="grid-template-columns: repeat(16, 40px); grid-template-rows: repeat(4, 40px);">
+        </div>
+      
+        <!-- カラーヒストリー表示 -->
+        <div id="history" class="border border-gray-300 p-2.5 mt-4">
+          <!-- ヒストリーのタイトルとダウンロードボタンを同じ行に配置 -->
+          <div class="flex items-center">
+            <h3 class="text-lg font-semibold px-4">カラーヒストリー</h3>
+            <button id="download-history"
+              class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
+              disabled>
+              画像ダウンロード⬇
+            </button>
+          </div>
+          <!-- ヒストリーの色ボックスを最大16列で表示 -->
+          <div id="history-colors" class="grid gap-1 mt-2" style="grid-template-columns: repeat(16, 64px);">
+            <!-- ヒストリーの色ボックスがここに追加されます -->
+          </div>
+          <!-- カラーヒストリーのダウンロードオプション -->
+          <div class="mt-4">
+            <h3 class="text-lg font-semibold">ヒストリーのダウンロードオプション</h3>
+            <div>
+          <input type="radio" id="history-include-image" name="history-download-option" value="include" class="mr-2" checked>
+          <label for="history-include-image">元画像の下にヒストリー情報を追加してダウンロードする</label>
+          </div>
+          <div>
+          <input type="radio" id="history-only" name="history-download-option" value="history-only" class="mr-2">
+          <label for="history-only">ヒストリー情報のみダウンロードする</label>
+          </div>
+          </div>
+          </div>
+          <!-- ダウンロードオプション -->
+          <div class="mt-4">
+            <h3 class="text-lg font-semibold">パレットのダウンロードオプション</h3>
+            <div>
+              <input type="radio" id="include-image" name="download-option" value="include" class="mr-2" checked>
+              <label for="include-image">元画像の下にパレット情報を追加してダウンロードする</label>
             </div>
+            <div>
+              <input type="radio" id="palette-only" name="download-option" value="palette-only" class="mr-2">
+              <label for="palette-only">パレット情報のみダウンロードする</label>
+            </div>
+            <button id="download-palette"
+              class="mt-2 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
+              disabled>
+              パレットダウンロード⬇
+            </button>
+          </div>
+          <!-- エラーメッセージ -->
+          <div id="error-message"
+            class="fixed bottom-0 left-0 w-full bg-[#e0e0e0] p-2.5 text-center text-red-500 border-t border-gray-300 z-50">
           </div>
 
-          <hr>
+<!-- 一番上に戻るボタン（初期状態は非表示） -->
+<button id="back-to-top"
+  class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shadow-lg hidden hover:bg-blue-600 z-50">
+  一番上に戻る
+</button>
+</main>
+</div>
+</div>
 
-          <!-- 画像のパレット表示 -->
-          <div id="palette" class="border border-gray-300 p-2.5">
-            <h3 class="text-lg font-semibold">🎨画像のパレット</h3>
-            <div id="palette-colors" class="grid gap-1 mt-2"
-              style="grid-template-columns: repeat(16, 40px); grid-template-rows: repeat(4, 40px);">
-            </div>
-
-            <!-- カラーヒストリー表示 -->
-            <div id="history" class="border border-gray-300 p-2.5 mt-4">
-              <!-- ヒストリーのタイトルとダウンロードボタンを同じ行に配置 -->
-              <div class="flex items-center">
-                <h3 class="text-lg font-semibold px-4">カラーヒストリー</h3>
-                <button id="download-history"
-                  class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
-                  disabled>
-                  画像ダウンロード⬇
-                </button>
-              </div>
-              <!-- ヒストリーの色ボックスを最大16列で表示 -->
-              <div id="history-colors" class="grid gap-1 mt-2" style="grid-template-columns: repeat(16, 64px);">
-                <!-- ヒストリーの色ボックスがここに追加されます -->
-              </div>
-              <!-- カラーヒストリーのダウンロードオプション -->
-              <div class="mt-4">
-                <h3 class="text-lg font-semibold">ヒストリーのダウンロードオプション</h3>
-                <div>
-                  <input type="radio" id="history-include-image" name="history-download-option" value="include"
-                    class="mr-2" checked>
-                  <label for="history-include-image">元画像の下にヒストリー情報を追加してダウンロードする</label>
-                </div>
-                <div>
-                  <input type="radio" id="history-only" name="history-download-option" value="history-only"
-                    class="mr-2">
-                  <label for="history-only">ヒストリー情報のみダウンロードする</label>
-                </div>
-              </div>
-            </div>
-            <!-- ダウンロードオプション -->
-            <div class="mt-4">
-              <h3 class="text-lg font-semibold">パレットのダウンロードオプション</h3>
-              <div>
-                <input type="radio" id="include-image" name="download-option" value="include" class="mr-2" checked>
-                <label for="include-image">元画像の下にパレット情報を追加してダウンロードする</label>
-              </div>
-              <div>
-                <input type="radio" id="palette-only" name="download-option" value="palette-only" class="mr-2">
-                <label for="palette-only">パレット情報のみダウンロードする</label>
-              </div>
-              <button id="download-palette"
-                class="mt-2 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
-                disabled>
-                パレットダウンロード⬇
-              </button>
-            </div>
-            <!-- エラーメッセージ -->
-            <div id="error-message"
-              class="fixed bottom-0 left-0 w-full bg-[#e0e0e0] p-2.5 text-center text-red-500 border-t border-gray-300 z-50">
-            </div>
-
-            <!-- 一番上に戻るボタン（初期状態は非表示） -->
-            <button id="back-to-top"
-              class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shadow-lg hidden hover:bg-blue-600 z-50">
-              一番上に戻る
-            </button>
-      </main>
-    </div>
-    </div>
-
-    <script>
-      // ------------------------------------------------
-      // ColorHelper クラス（色変換・情報取得用のユーティリティクラス）
-      // ------------------------------------------------
-      class ColorHelper {
-        /**
-        * コンストラクタ  
-        * input: 文字列（"#RRGGBB"形式など）または {r, g, b} オブジェクト
-        */
-        constructor(input) {
-          if (typeof input === 'string') {
-            this.rgb = ColorHelper.hexToRgb(input);
-          } else if (typeof input === 'object' && input.r !== undefined) {
-            this.rgb = { r: input.r, g: input.g, b: input.b };
-          } else {
-            throw new Error("Invalid color input");
-          }
-        }
-
-        /**
-        * 16進数文字列から RGB オブジェクトへ変換する静的メソッド
-        * @param {string} hex - "#RRGGBB" 形式の文字列
-        * @returns {object} {r, g, b}
-        */
-        static hexToRgb(hex) {
-          hex = hex.replace('#', '');
-          if (hex.length === 3) {
-            hex = hex.split('').map(ch => ch + ch).join('');
-          }
-          const bigint = parseInt(hex, 16);
-          const r = (bigint >> 16) & 255;
-          const g = (bigint >> 8) & 255;
-          const b = bigint & 255;
-          return { r, g, b };
-        }
-
-        /**
-        * RGBから16進数表記に変換する静的メソッド
-        * @param {number} r 
-        * @param {number} g 
-        * @param {number} b 
-        * @returns {string} "#RRGGBB" 形式の文字列
-        */
-        static rgbToHex(r, g, b) {
-          return "#" + [r, g, b].map(c => c.toString(16).padStart(2, '0')).join('');
-        }
-
-        /**
-        * インスタンスの RGB 値から 16進数表記に変換する
-        * @returns {string} "#RRGGBB" 形式の文字列
-        */
-        toHex() {
-          return ColorHelper.rgbToHex(this.rgb.r, this.rgb.g, this.rgb.b);
-        }
-
-        /**
-        * RGB値から HSV 値へ変換する静的メソッド  
-        * @param {number} r 
-        * @param {number} g 
-        * @param {number} b 
-        * @returns {Array} [h, s, v]（h: 0～360, s,v: 0～100）
-        */
-        static rgbToHsv(r, g, b) {
-          r /= 255; g /= 255; b /= 255;
-          const max = Math.max(r, g, b);
-          const min = Math.min(r, g, b);
-          let h, s, v = max;
-          const d = max - min;
-          s = max === 0 ? 0 : d / max;
-          if (max === min) {
-            h = 0;
-          } else {
-            switch (max) {
-              case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-              case g: h = (b - r) / d + 2; break;
-              case b: h = (r - g) / d + 4; break;
-            }
-            h /= 6;
-          }
-          return [Math.round(h * 360), Math.round(s * 100), Math.round(v * 100)];
-        }
-
-        /**
-        * インスタンスの RGB 値から HSV 値へ変換する
-        * @returns {Array} [h, s, v]（h: 0～360, s,v: 0～100）
-        */
-        toHsv() {
-          return ColorHelper.rgbToHsv(this.rgb.r, this.rgb.g, this.rgb.b);
-        }
-        /**
-        * インスタンスの RGB 値から RGB オブジェクトへ変換する
-        * @returns {Array} [r, g, b]
-        */
-        toRGB() {
-          return [this.rgb.r, this.rgb.g, this.rgb.b];
-        }
-
-        /**
-        * ファクトリーメソッド：RGB値からインスタンス生成
-        * @param {number} r
-        * @param {number} g
-        * @param {number} b
-        * @returns {ColorHelper}
-        */
-        static fromRgb(r, g, b) {
-          return new ColorHelper({ r, g, b });
-        }
-
+<script>
+  // ------------------------------------------------
+  // ColorHelper クラス（色変換・情報取得用のユーティリティクラス）
+  // ------------------------------------------------
+  class ColorHelper {
+    /**
+    * コンストラクタ  
+    * input: 文字列（"#RRGGBB"形式など）または {r, g, b} オブジェクト
+    */
+    constructor(input) {
+      if (typeof input === 'string') {
+        this.rgb = ColorHelper.hexToRgb(input);
+      } else if (typeof input === 'object' && input.r !== undefined) {
+        this.rgb = { r: input.r, g: input.g, b: input.b };
+      } else {
+        throw new Error("Invalid color input");
       }
-      // 各要素の取得
-      const fileInput = document.getElementById('file-input');
-      const dropArea = document.getElementById('drop-area');
-      const canvas = document.getElementById('image-canvas');
-      const ctx = canvas.getContext('2d', {
-        willReadFrequently: true
-      });
-      const pasteButton = document.getElementById('paste-button');
-      const paletteContainer = document.getElementById('palette-colors');
-      const currentColorDisplay = document.getElementById('color-display');
-      const historyContainer = document.getElementById('history-colors');
-      const errorMessage = document.getElementById('error-message');
-      const backToTopBtn = document.getElementById('back-to-top');
-      const downloadPaletteBtn = document.getElementById('download-palette');
-      let lastColor = null;
-      const downloadHistoryBtn = document.getElementById('download-history');
-      const colorHex = document.getElementById('color-hex');
-      const colorRgb = document.getElementById('color-rgb');
-      const colorHsv = document.getElementById('color-hsv');
+    }
+
+    /**
+    * 16進数文字列から RGB オブジェクトへ変換する静的メソッド
+    * @param {string} hex - "#RRGGBB" 形式の文字列
+    * @returns {object} {r, g, b}
+    */
+    static hexToRgb(hex) {
+      hex = hex.replace('#', '');
+      if (hex.length === 3) {
+        hex = hex.split('').map(ch => ch + ch).join('');
+      }
+      const bigint = parseInt(hex, 16);
+      const r = (bigint >> 16) & 255;
+      const g = (bigint >> 8) & 255;
+      const b = bigint & 255;
+      return { r, g, b };
+    }
+
+    /**
+    * RGBから16進数表記に変換する静的メソッド
+    * @param {number} r 
+    * @param {number} g 
+    * @param {number} b 
+    * @returns {string} "#RRGGBB" 形式の文字列
+    */
+    static rgbToHex(r, g, b) {
+      return "#" + [r, g, b].map(c => c.toString(16).padStart(2, '0')).join('');
+    }
+
+    /**
+    * インスタンスの RGB 値から 16進数表記に変換する
+    * @returns {string} "#RRGGBB" 形式の文字列
+    */
+    toHex() {
+      return ColorHelper.rgbToHex(this.rgb.r, this.rgb.g, this.rgb.b);
+    }
+
+    /**
+    * RGB値から HSV 値へ変換する静的メソッド  
+    * @param {number} r 
+    * @param {number} g 
+    * @param {number} b 
+    * @returns {Array} [h, s, v]（h: 0～360, s,v: 0～100）
+    */
+    static rgbToHsv(r, g, b) {
+      r /= 255; g /= 255; b /= 255;
+      const max = Math.max(r, g, b);
+      const min = Math.min(r, g, b);
+      let h, s, v = max;
+      const d = max - min;
+      s = max === 0 ? 0 : d / max;
+      if (max === min) {
+        h = 0;
+      } else {
+        switch (max) {
+          case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+          case g: h = (b - r) / d + 2; break;
+          case b: h = (r - g) / d + 4; break;
+        }
+        h /= 6;
+      }
+      return [Math.round(h * 360), Math.round(s * 100), Math.round(v * 100)];
+    }
+
+    /**
+    * インスタンスの RGB 値から HSV 値へ変換する
+    * @returns {Array} [h, s, v]（h: 0～360, s,v: 0～100）
+    */
+    toHsv() {
+      return ColorHelper.rgbToHsv(this.rgb.r, this.rgb.g, this.rgb.b);
+    }
+    /**
+    * インスタンスの RGB 値から RGB オブジェクトへ変換する
+    * @returns {Array} [r, g, b]
+    */
+    toRGB() {
+      return [this.rgb.r, this.rgb.g, this.rgb.b];
+    }
+
+    /**
+    * ファクトリーメソッド：RGB値からインスタンス生成
+    * @param {number} r
+    * @param {number} g
+    * @param {number} b
+    * @returns {ColorHelper}
+    */
+    static fromRgb(r, g, b) {
+      return new ColorHelper({ r, g, b });
+    }
+
+    }
+    // 各要素の取得
+    const fileInput = document.getElementById('file-input');
+    const dropArea = document.getElementById('drop-area');
+    const canvas = document.getElementById('image-canvas');
+    const ctx = canvas.getContext('2d', {
+      willReadFrequently: true
+    });
+    const pasteButton = document.getElementById('paste-button');
+    const paletteContainer = document.getElementById('palette-colors');
+    const currentColorDisplay = document.getElementById('color-display');
+    const historyContainer = document.getElementById('history-colors');
+    const errorMessage = document.getElementById('error-message');
+    const backToTopBtn = document.getElementById('back-to-top');
+    const downloadPaletteBtn = document.getElementById('download-palette');
+    let lastColor = null;
+    const downloadHistoryBtn = document.getElementById('download-history');
+    const colorHex = document.getElementById('color-hex');
+    const colorRgb = document.getElementById('color-rgb');
+    const colorHsv = document.getElementById('color-hsv');
+      const colorPreview = document.getElementById('color-preview');
+      const canvasMessage = document.getElementById('canvas-message');
+
+      colorPreview.style.position = 'absolute';
+      colorPreview.style.width = '80px';
+      colorPreview.style.height = '80px';
+      colorPreview.style.borderRadius = '50%';
+      colorPreview.style.border = '3px solid white';
+      colorPreview.style.display = 'none';
+      colorPreview.style.justifyContent = 'center';
+      colorPreview.style.alignItems = 'center';
+      colorPreview.style.fontSize = '16px';
+      colorPreview.style.fontWeight = 'bold';
+      colorPreview.style.textShadow = '1px 1px 2px rgba(0, 0, 0, 0.7)';
+      colorPreview.style.pointerEvents = 'none';
+
+
+      let isDragging = false;
+      // タッチ・マウスイベントハンドラ（アロー関数）
+      const onTouchStart = (e) => {
+        e.preventDefault();
+        isDragging = true;
+        updateColorPreview(e.touches[0]);
+      };
+      const onTouchMove = (e) => {
+        e.preventDefault();
+        if (isDragging) updateColorPreview(e.touches[0]);
+      };
+      const onTouchEnd = () => {
+        isDragging = false;
+        colorPreview.classList.add('hidden');
+      };
+      const onMouseDown = (e) => {
+        isDragging = true;
+        updateColorPreview(e);
+      };
+      const onMouseMove = (e) => { if (isDragging) updateColorPreview(e); };
+      const onMouseUp = () => {
+        isDragging = false;
+        colorPreview.classList.add('hidden');
+      };
+
+      // イベント登録（最新の addEventListener 記法）
+      canvas.addEventListener('touchstart', onTouchStart);
+      canvas.addEventListener('touchmove', onTouchMove);
+      canvas.addEventListener('touchend', onTouchEnd);
+      canvas.addEventListener('mousedown', onMouseDown);
+      canvas.addEventListener('mousemove', onMouseMove);
+      canvas.addEventListener('mouseup', onMouseUp);
+
+      // カラー更新処理（アロー関数、分割代入）
+      const updateColorPreview = (event) => {
+        const { left, top, width, height } = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / width;
+        const scaleY = canvas.height / height;
+        const x = Math.floor((event.clientX - left) * scaleX);
+        const y = Math.floor((event.clientY - top) * scaleY);
+
+        const [r, g, b, a] = ctx.getImageData(x, y, 1, 1).data;
+        if (a === 0) return;
+
+        const hex = ColorHelper.rgbToHex(r, g, b);
+
+        // キャンバスコンテナの座標を取得
+        const container = document.getElementById('canvas-container');
+        const containerRect = container.getBoundingClientRect();
+
+        // プレビューの更新（コンテナ内の座標に変換）
+        colorPreview.style.backgroundColor = hex;
+        colorPreview.style.color = isDarkColor(hex) ? '#ffffff' : '#000000';
+        colorPreview.textContent = hex;
+        // container内の相対位置に変換（プレビューサイズは80pxなので半分の40pxを引く）
+        colorPreview.style.left = `${event.clientX - containerRect.left - 40}px`;
+        colorPreview.style.top = `${event.clientY - containerRect.top - 40}px`;
+        colorPreview.style.display = 'flex';
+        console.log(hex);
+      };
 
       /** ヘルパー関数：16進数から現在色表示を更新する
       * @param {string} hex
@@ -379,60 +465,60 @@
         const data = imageData.data;
         const colorCount = {};
 
-        // 全ピクセルを対象にすると重いので、一定間隔（例: 10px）でサンプル
-        const step = 10;
-        for (let y = 0; y < height; y += step) {
-          for (let x = 0; x < width; x += step) {
-            const index = (y * width + x) * 4;
-            const r = data[index];
-            const g = data[index + 1];
-            const b = data[index + 2];
-            // 透明度が低いものは除外（必要に応じて調整）
-            const a = data[index + 3];
-            if (a < 128) continue;
-            // 簡易量子化：各チャンネルを16段階に丸める
-            const key = [
-              Math.floor(r / 16) * 16,
-              Math.floor(g / 16) * 16,
-              Math.floor(b / 16) * 16
-            ].join(',');
-            colorCount[key] = (colorCount[key] || 0) + 1;
-          }
+      // 全ピクセルを対象にすると重いので、一定間隔（例: 10px）でサンプル
+      const step = 10;
+      for (let y = 0; y < height; y += step) {
+        for (let x = 0; x < width; x += step) {
+          const index = (y * width + x) * 4;
+          const r = data[index];
+          const g = data[index + 1];
+          const b = data[index + 2];
+          // 透明度が低いものは除外（必要に応じて調整）
+          const a = data[index + 3];
+          if (a < 128) continue;
+          // 簡易量子化：各チャンネルを16段階に丸める
+          const key = [
+            Math.floor(r / 16) * 16,
+            Math.floor(g / 16) * 16,
+            Math.floor(b / 16) * 16
+          ].join(',');
+          colorCount[key] = (colorCount[key] || 0) + 1;
         }
-
-        // 出現頻度が高い順にソートし、上位64色を抽出
-        const sortedColors = Object.entries(colorCount)
-          .sort((a, b) => b[1] - a[1])
-          .slice(0, 64);
-
-        // カラーパレット表示エリアのクリア
-        paletteContainer.innerHTML = "";
-        // カラーヒストリー表示エリアのクリア
-        historyContainer.innerHTML = "";
-        // カラーパレットが空になったので無効化
-        downloadPaletteBtn.disabled = true;
-        // ヒストリーが空になったので無効化
-        downloadHistoryBtn.disabled = true;
-
-        // カラーパレット表示（横16個×縦4個のグリッド）
-        sortedColors.forEach(([colorKey, count]) => {
-          const [r, g, b] = colorKey.split(',').map(Number);
-          const hex = ColorHelper.rgbToHex(r, g, b);
-          const colorDiv = document.createElement('div');
-          colorDiv.className = 'color-box';
-          colorDiv.style.background = hex;
-          colorDiv.title = `${hex} (${count}回)`;
-          colorDiv.textContent = "";
-
-          colorDiv.addEventListener('click', () => {
-            updateCurrentColor(hex);
-            addColorToHistory(hex);
-          });
-          paletteContainer.appendChild(colorDiv);
-        });
-
-        downloadPaletteBtn.disabled = paletteContainer.length > 0;
       }
+
+      // 出現頻度が高い順にソートし、上位64色を抽出
+      const sortedColors = Object.entries(colorCount)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 64);
+
+      // カラーパレット表示エリアのクリア
+      paletteContainer.innerHTML = "";
+      // カラーヒストリー表示エリアのクリア
+      historyContainer.innerHTML = "";
+      // カラーパレットが空になったので無効化
+      downloadPaletteBtn.disabled = true;
+      // ヒストリーが空になったので無効化
+      downloadHistoryBtn.disabled = true;
+
+      // カラーパレット表示（横16個×縦4個のグリッド）
+      sortedColors.forEach(([colorKey, count]) => {
+        const [r, g, b] = colorKey.split(',').map(Number);
+        const hex = ColorHelper.rgbToHex(r, g, b);
+        const colorDiv = document.createElement('div');
+        colorDiv.className = 'color-box';
+        colorDiv.style.background = hex;
+        colorDiv.title = `${hex} (${count}回)`;
+        colorDiv.textContent = "";
+
+        colorDiv.addEventListener('click', () => {
+          updateCurrentColor(hex);
+          addColorToHistory(hex);
+        });
+        paletteContainer.appendChild(colorDiv);
+      });
+
+      downloadPaletteBtn.disabled = paletteContainer.length > 0;
+    }
 
       // マウス移動時にカーソル下の色を取得して表示
       canvas.addEventListener('mousemove', (e) => {
@@ -482,16 +568,16 @@
         errorMessage.textContent = "";  // エラー解除
         lastColor = hex;
 
-        const colorDiv = document.createElement('div');
-        colorDiv.className = 'color-box';
-        colorDiv.style.background = hex;
-        colorDiv.style.color = isDarkColor(hex) ? "#ffffff" : "#000000";
-        colorDiv.title = hex;
-        colorDiv.textContent = hex;
-        historyContainer.appendChild(colorDiv);
-        // ヒストリーに項目が追加されたので、ダウンロードボタンを有効化
-        downloadHistoryBtn.disabled = paletteContainer.length > 0;
-      }
+      const colorDiv = document.createElement('div');
+      colorDiv.className = 'color-box';
+      colorDiv.style.background = hex;
+      colorDiv.style.color = isDarkColor(hex) ? "#ffffff" : "#000000";
+      colorDiv.title = hex;
+      colorDiv.textContent = hex;
+      historyContainer.appendChild(colorDiv);
+      // ヒストリーに項目が追加されたので、ダウンロードボタンを有効化
+      downloadHistoryBtn.disabled = paletteContainer.length > 0;
+    }
 
       // ヒストリー画像ダウンロード処理
       downloadHistoryBtn.addEventListener('click', () => {
@@ -511,52 +597,52 @@
           downloadCanvas.height = canvas.height + historyContainer.offsetHeight + 20;
           const downloadCtx = downloadCanvas.getContext('2d');
 
-          // 元画像を描画
-          downloadCtx.drawImage(img, 0, 0);
+        // 元画像を描画
+        downloadCtx.drawImage(img, 0, 0);
 
-          // ヒストリーの色ボックスを元画像の下に描画
-          const itemSize = 40;  // 各色ボックスのサイズ
-          let yOffset = canvas.height + 10;
-          historyItems.forEach((item, index) => {
-            const col = index % 10;
-            const row = Math.floor(index / 10);
-            downloadCtx.fillStyle = item.title;  // title 属性に hex 値を設定している
-            downloadCtx.fillRect(col * itemSize, yOffset + row * itemSize, itemSize, itemSize);
-            // 境界線描画
-            downloadCtx.strokeStyle = "#000";
-            downloadCtx.strokeRect(col * itemSize, yOffset + row * itemSize, itemSize, itemSize);
-          });
+        // ヒストリーの色ボックスを元画像の下に描画
+        const itemSize = 40;  // 各色ボックスのサイズ
+        let yOffset = canvas.height + 10;
+        historyItems.forEach((item, index) => {
+          const col = index % 10;
+          const row = Math.floor(index / 10);
+          downloadCtx.fillStyle = item.title;  // title 属性に hex 値を設定している
+          downloadCtx.fillRect(col * itemSize, yOffset + row * itemSize, itemSize, itemSize);
+          // 境界線描画
+          downloadCtx.strokeStyle = "#000";
+          downloadCtx.strokeRect(col * itemSize, yOffset + row * itemSize, itemSize, itemSize);
+        });
 
-          const dataURL = downloadCanvas.toDataURL("image/png");
-          const a = document.createElement('a');
-          const now = new Date().toISOString();
-          a.download = `color_history_with_image_${now}.png`;
-          a.href = dataURL;
-          a.click();
+        const dataURL = downloadCanvas.toDataURL("image/png");
+        const a = document.createElement('a');
+        const now = new Date().toISOString();
+        a.download = `color_history_with_image_${now}.png`;
+        a.href = dataURL;
+        a.click();
 
-        } else {
-          // ヒストリー情報のみでダウンロード
-          const downloadCanvas = document.createElement('canvas');
-          downloadCanvas.width = historyContainer.offsetWidth;
-          downloadCanvas.height = historyContainer.offsetHeight;
-          const downloadCtx = downloadCanvas.getContext('2d');
+      } else {
+        // ヒストリー情報のみでダウンロード
+        const downloadCanvas = document.createElement('canvas');
+        downloadCanvas.width = historyContainer.offsetWidth;
+        downloadCanvas.height = historyContainer.offsetHeight;
+        const downloadCtx = downloadCanvas.getContext('2d');
 
-          const itemSize = 40;
-          historyItems.forEach((item, index) => {
-            const col = index % 10;
-            const row = Math.floor(index / 10);
-            downloadCtx.fillStyle = item.title;
-            downloadCtx.fillRect(col * itemSize, row * itemSize, itemSize, itemSize);
-          });
+        const itemSize = 40;
+        historyItems.forEach((item, index) => {
+          const col = index % 10;
+          const row = Math.floor(index / 10);
+          downloadCtx.fillStyle = item.title;
+          downloadCtx.fillRect(col * itemSize, row * itemSize, itemSize, itemSize);
+        });
 
-          const dataURL = downloadCanvas.toDataURL("image/png");
-          const a = document.createElement('a');
-          const now = new Date().toISOString();
-          a.download = `color_history_only_${now}.png`;
-          a.href = dataURL;
-          a.click();
-        }
-      });
+        const dataURL = downloadCanvas.toDataURL("image/png");
+        const a = document.createElement('a');
+        const now = new Date().toISOString();
+        a.download = `color_history_only_${now}.png`;
+        a.href = dataURL;
+        a.click();
+      }
+    });
 
       // スクロールイベントで「一番上に戻る」ボタンの表示切替
       window.addEventListener('scroll', () => {
@@ -578,63 +664,63 @@
       downloadPaletteBtn.addEventListener('click', () => {
         const selectedOption = document.querySelector('input[name="download-option"]:checked').value;
 
-        if (selectedOption === "include") {
-          // 元画像の下にカラーパレット情報を追加してダウンロード
-          const downloadCanvas = document.createElement('canvas');
-          downloadCanvas.width = canvas.width;
-          downloadCanvas.height = canvas.height + paletteContainer.offsetHeight + 20;
-          const downloadCtx = downloadCanvas.getContext('2d');
+      if (selectedOption === "include") {
+        // 元画像の下にカラーパレット情報を追加してダウンロード
+        const downloadCanvas = document.createElement('canvas');
+        downloadCanvas.width = canvas.width;
+        downloadCanvas.height = canvas.height + paletteContainer.offsetHeight + 20;
+        const downloadCtx = downloadCanvas.getContext('2d');
 
-          // 元画像をキャンバスに描画
-          downloadCtx.drawImage(img, 0, 0);
+        // 元画像をキャンバスに描画
+        downloadCtx.drawImage(img, 0, 0);
 
-          // カラーパレット情報を描画
-          let yOffset = canvas.height + 10;
-          const colorDivs = paletteContainer.querySelectorAll('.color-box');
-          colorDivs.forEach((colorDiv, index) => {
-            const hex = colorDiv.style.backgroundColor;
-            downloadCtx.fillStyle = hex;
-            downloadCtx.fillRect(index % 16 * 40, yOffset + Math.floor(index / 16) * 40, 40, 40);
-          });
+        // カラーパレット情報を描画
+        let yOffset = canvas.height + 10;
+        const colorDivs = paletteContainer.querySelectorAll('.color-box');
+        colorDivs.forEach((colorDiv, index) => {
+          const hex = colorDiv.style.backgroundColor;
+          downloadCtx.fillStyle = hex;
+          downloadCtx.fillRect(index % 16 * 40, yOffset + Math.floor(index / 16) * 40, 40, 40);
+        });
 
-          // ダウンロード
-          const dataURL = downloadCanvas.toDataURL('image/png');
-          const a = document.createElement('a');
-          const now = new Date().toISOString();
-          a.download = `image_with_palette_${now}.png`;
-          a.href = dataURL;
-          a.click();
-        } else {
-          // カラーパレット情報のみダウンロード
-          const downloadCanvas = document.createElement('canvas');
-          downloadCanvas.width = paletteContainer.offsetWidth;
-          downloadCanvas.height = paletteContainer.offsetHeight;
-          const downloadCtx = downloadCanvas.getContext('2d');
+        // ダウンロード
+        const dataURL = downloadCanvas.toDataURL('image/png');
+        const a = document.createElement('a');
+        const now = new Date().toISOString();
+        a.download = `image_with_palette_${now}.png`;
+        a.href = dataURL;
+        a.click();
+      } else {
+        // カラーパレット情報のみダウンロード
+        const downloadCanvas = document.createElement('canvas');
+        downloadCanvas.width = paletteContainer.offsetWidth;
+        downloadCanvas.height = paletteContainer.offsetHeight;
+        const downloadCtx = downloadCanvas.getContext('2d');
 
-          // カラーパレット情報を描画
-          const colorDivs = paletteContainer.querySelectorAll('.color-box');
-          colorDivs.forEach((colorDiv, index) => {
-            const hex = colorDiv.style.backgroundColor;
-            downloadCtx.fillStyle = hex;
-            downloadCtx.fillRect(index % 16 * 40, Math.floor(index / 16) * 40, 40, 40);
-          });
+        // カラーパレット情報を描画
+        const colorDivs = paletteContainer.querySelectorAll('.color-box');
+        colorDivs.forEach((colorDiv, index) => {
+          const hex = colorDiv.style.backgroundColor;
+          downloadCtx.fillStyle = hex;
+          downloadCtx.fillRect(index % 16 * 40, Math.floor(index / 16) * 40, 40, 40);
+        });
 
-          // ダウンロード
-          const dataURL = downloadCanvas.toDataURL('image/png');
-          const a = document.createElement('a');
-          const now = new Date().toISOString();
-          a.download = `palette_only_${now}.png`;
-          a.href = dataURL;
-          a.click();
-        }
-      });
-      // -------------------------------
-      // テーマ切替・初期表示処理
-      // -------------------------------
-      const urlParams = new URLSearchParams(window.location.search);
-      let currentMode = urlParams.get('mode') || 'light';
-      const body = document.body;
-      const themeToggleBtn = document.getElementById('theme-toggle');
+        // ダウンロード
+        const dataURL = downloadCanvas.toDataURL('image/png');
+        const a = document.createElement('a');
+        const now = new Date().toISOString();
+        a.download = `palette_only_${now}.png`;
+        a.href = dataURL;
+        a.click();
+      }
+    });
+          // -------------------------------
+          // テーマ切替・初期表示処理
+          // -------------------------------
+          const urlParams = new URLSearchParams(window.location.search);
+          let currentMode = urlParams.get('mode') || 'light';
+          const body = document.body;
+          const themeToggleBtn = document.getElementById('theme-toggle');
 
       function setTheme(mode) {
         if (mode === 'dark') {
