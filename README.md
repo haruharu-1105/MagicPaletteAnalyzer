@@ -4,13 +4,13 @@ MagicPaletteAnalyzer - 画像から色を召喚する魔導具
 
 ## 🚀 使い方  
 ### a. ブラウザで試す（おすすめ！）  
-<a href="https://haruharu-1105.github.io/MagicPaletteAnalyzer/" target="_parent"></a>をクリックするだけで、すぐに使えます！ソフトのインストール不要で、手軽にカラーパレットを作成できます。  
+<a href="https://haruharu-1105.github.io/MagicPaletteAnalyzer/" target="_parent">クリック</a>するだけで、すぐに使えます！ソフトのインストール不要で、手軽にカラーパレットを作成できます。  
 ### b. アプリをダウンロードして使う  
 より安定した環境で使いたい方は、オフライン版をダウンロードしてください。  
 
 ## 🚀 導入方法  
 ### 1. セットアップ  
-1. [Releases](https://github.com/haruharu-1105/MagicPaletteAnalyzer/releases)ページを開き、一番上の Assets 欄にある `MagicPaletteAnalyzer.zip` をダウンロードします。  
+1. [Releases](https://github.com/haruharu-1105/MagicPaletteAnalyzer/releases)ページを開き、一番上の Assets 欄にある `Source code(zip)` をダウンロードします。  
 1. zipファイルを展開します。  
 ### 2. 実行  
 展開されたフォルダ内の docs フォルダにある index.html ファイルをダブルクリックするだけで実行できます。
