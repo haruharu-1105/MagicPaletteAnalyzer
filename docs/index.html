@@ -22,7 +22,7 @@
 </head>
 <body class="bg-gray-100 text-[#1a1a1a] dark:text-[#e0e0e0] mx-4 w-full dark:bg-gray-900">
   <!-- 固定ヘッダー -->
-  <header class="fixed top-0 left-0 w-full shadow z-50 dark:text-[#e0e0e0]">
+  <header class="fixed top-0 left-0 w-full shadow z-50 dark:text-[#e0e0e0] dark:bg-gray-800">
     <!-- ヘッダー上部：タイトル・バージョン、GitHubリンク、テーマ切替 -->
     <div class="flex items-center justify-between px-4 py-4">
       <div>
@@ -61,7 +61,7 @@
     <!-- ページ全体のレイアウト：サイドバーとメインコンテンツ -->
     <div class="flex pt-24">
       <!-- 左側のサイドバー（固定） -->
-      <aside class="fixed left-0 top-32 w-40 h-full shadow dark:text-[#e0e0e0]">
+      <aside class="fixed left-0 top-32 w-40 h-full shadow dark:text-[#e0e0e0] z-40">
         <!-- 現在選択色表示 -->
         <h2 class="text-xl font-bold m-4">現在選択色</h2>
         <div id="color-info" class="flex flex-col items-center">
@@ -74,7 +74,7 @@
         </div>
       </aside>
       <!-- メインコンテンツ -->
-      <main class="flex-1 ml-40 dark:text-[#e0e0e0]">
+      <main class="flex-1 ml-40 dark:text-[#e0e0e0] z-40">
         <!-- コンテンツ全体（ヘッダー分の余白を確保） -->
         <div id="container" class="font-sans flex flex-col gap-2 my-8 max-w-full">
           <div id="image-container" class="border-2 border-dashed border-gray-300 " height="320px">
@@ -151,12 +151,12 @@
             </div>
             <!-- エラーメッセージ -->
             <div id="error-message"
-              class="fixed bottom-0 left-0 w-full bg-[#e0e0e0] p-2.5 text-center text-red-500 border-t border-gray-300">
+              class="fixed bottom-0 left-0 w-full bg-[#e0e0e0] p-2.5 text-center text-red-500 border-t border-gray-300 z-50">
             </div>
 
             <!-- 一番上に戻るボタン（初期状態は非表示） -->
             <button id="back-to-top"
-              class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shadow-lg hidden hover:bg-blue-600">
+              class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shadow-lg hidden hover:bg-blue-600 z-50">
               一番上に戻る
             </button>
       </main>
