@@ -167,10 +167,10 @@
   class="fixed bottom-0 left-0 w-full bg-[#e0e0e0] p-2.5 text-center text-red-500 border-t border-gray-300 z-50">
 </div>
 
-<!-- 一番上に戻るボタン（初期状態は非表示） -->
-<button id="back-to-top"
+<!-- 一番上にスクロールボタン（初期状態は非表示） -->
+<button id="scroll-to-top"
 class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shadow-lg hidden hover:bg-blue-600 z-50">
-一番上に戻る
+一番上にスクロール
 </button>
 </main>
 </div>
@@ -290,23 +290,23 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
   // UI 要素の管理オブジェクト
   const uiElements = {
     themeToggleBtn: document.getElementById('theme-toggle'),
-    fileInput: document.getElementById('file-input'),
-    dropArea: document.getElementById('drop-area'),
-    pasteButton: document.getElementById('paste-button'),
-    canvas: document.getElementById('image-canvas'),
+    fileInput: document.getElementById('file-input'), // 画像アップロードのファイル入力
+    dropArea: document.getElementById('drop-area'),// ドラッグ＆ドロップ領域
+    pasteButton: document.getElementById('paste-button'),// クリップボードから貼り付けるボタン
+    canvas: document.getElementById('image-canvas'),// 画像を描画するキャンバス
     canvasContainer: document.getElementById('canvas-container'), /* image-canvasと重複しているため最終的には不要 */
-    paletteContainer: document.getElementById('palette-colors'),
-    historyContainer: document.getElementById('history-colors'),
-    errorMessage: document.getElementById('error-message'),
-    currentColorDisplay: document.getElementById('color-display'),
-    colorHex: document.getElementById('color-hex'),
-    colorRgb: document.getElementById('color-rgb'),
-    colorHsv: document.getElementById('color-hsv'),
-    colorPreview: document.getElementById('color-preview'),
+    paletteContainer: document.getElementById('palette-colors'), // カラーパレット表示エリア
+    historyContainer: document.getElementById('history-colors'), // カラーヒストリー表示エリア
+    errorMessage: document.getElementById('error-message'),// エラーメッセージ表示エリア
+    currentColorDisplay: document.getElementById('color-display'),// 現在選択色表示
+    colorHex: document.getElementById('color-hex'),// HEX 表示
+    colorRgb: document.getElementById('color-rgb'),// RGB 表示
+    colorHsv: document.getElementById('color-hsv'),// HSV 表示
+    colorPreview: document.getElementById('color-preview'),// 色プレビューエリア
     coordinateDisplay: document.getElementById('coordinate-display'), /* 座標表示用オーバーレイ要素 */
-    backToTopBtn: document.getElementById('back-to-top'),
-    downloadPaletteBtn: document.getElementById('download-palette'),
-    downloadHistoryBtn: document.getElementById('download-history'),
+    scrollToTopButton: document.getElementById('scroll-to-top'), // 一番上にスクロールボタン
+    downloadPaletteBtn: document.getElementById('download-palette'),// パレットダウンロードボタン
+    downloadHistoryBtn: document.getElementById('download-history'),// ヒストリーダウンロードボタン
     canvasMessage: document.getElementById('canvas-message'),
   };
   
@@ -664,14 +664,14 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
     // ヘッダーの高さ（この例では約80px）
     const headerHeight = 80;
     if (window.scrollY > headerHeight) {
-      uiElements.backToTopBtn.classList.remove('hidden');
+      uiElements.scrollToTopButton.classList.remove('hidden');
     } else {
-      uiElements.backToTopBtn.classList.add('hidden');
+      uiElements.scrollToTopButton.classList.add('hidden');
     }
   });
   
-  // 「一番上に戻る」ボタンのクリックでスムーズスクロール
-  uiElements.backToTopBtn.addEventListener('click', () => {
+    // 「一番上にスクロール」ボタンのクリックでスムーズスクロール
+    uiElements.scrollToTopButton.addEventListener('click', () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
   
