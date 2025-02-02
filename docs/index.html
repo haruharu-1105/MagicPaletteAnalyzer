@@ -286,7 +286,6 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
     
   }
   
-  
   // UI 要素の管理オブジェクト
   const uiElements = {
     themeToggleBtn: document.getElementById('theme-toggle'),
@@ -330,66 +329,77 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
   uiElements.colorPreview.style.pointerEvents = 'none';
   
   
+  // 共通のフラグ（ドラッグ中かどうか）
   let isDragging = false;
-  // タッチ・マウスイベントハンドラ（アロー関数）
-  const onTouchStart = (e) => {
-    e.preventDefault();
-    isDragging = true;
-    updateColorPreview(e.touches[0]);
-  };
-  const onTouchMove = (e) => {
-    e.preventDefault();
-    if (isDragging) updateColorPreview(e.touches[0]);
-  };
-  const onTouchEnd = () => {
-    isDragging = false;
-    uiElements.colorPreview.classList.add('hidden');
-  };
-  const onMouseDown = (e) => {
-    isDragging = true;
-    updateColorPreview(e);
-  };
-  const onMouseMove = (e) => { if (isDragging) updateColorPreview(e); };
-  const onMouseUp = () => {
-    isDragging = false;
-    uiElements.colorPreview.classList.add('hidden');
-  };
   
-  // イベント登録（最新の addEventListener 記法）
-  uiElements.canvas.addEventListener('touchstart', onTouchStart);
-  uiElements.canvas.addEventListener('touchmove', onTouchMove);
-  uiElements.canvas.addEventListener('touchend', onTouchEnd);
-  uiElements.canvas.addEventListener('mousedown', onMouseDown);
-  uiElements.canvas.addEventListener('mousemove', onMouseMove);
-  uiElements.canvas.addEventListener('mouseup', onMouseUp);
+  /**
+  * 交互開始時のハンドラ（マウス、タッチどちらも）
+  * @param {Event} e 
+  */
+  function onInteractionStart(e) {
+    e.preventDefault(); // デフォルト動作の抑制（タッチスクロールなどを防ぐ）
+    isDragging = true;
+    updateColorPreview(e); // イベントオブジェクトをそのまま渡す
+  }
   
-      /**
-      * イベントオブジェクトからキャンバス上の座標を取得する関数
-      * @param {Event} event - マウスまたはタッチイベント
-      * @param {HTMLCanvasElement} canvas - 対象のキャンバス要素
-      * @returns {object} { x, y } キャンバス上の座標
-      */
-      function getCanvasCoordinates(event, canvas) {
-        const rect = canvas.getBoundingClientRect();
-        let clientX, clientY;
-        if (event.touches && event.touches.length) {
-          clientX = event.touches[0].clientX;
-          clientY = event.touches[0].clientY;
-        } else {
-          clientX = event.clientX;
-          clientY = event.clientY;
-        }
-        const scaleX = canvas.width / rect.width;
-        const scaleY = canvas.height / rect.height;
-        return {
-          x: Math.floor((clientX - rect.left) * scaleX),
-          y: Math.floor((clientY - rect.top) * scaleY)
-        };
-      }
-    
+  /**
+  * 移動時のハンドラ（マウス、タッチどちらも）
+  * @param {Event} e 
+  */
+  function onInteractionMove(e) {
+    e.preventDefault();
+    if (isDragging) {
+      updateColorPreview(e);
+    }
+  }
+  
+  /**
+  * 終了時のハンドラ（マウス、タッチどちらも）
+  * @param {Event} e 
+  */
+  function onInteractionEnd(e) {
+    e.preventDefault();
+    isDragging = false;
+    uiElements.colorPreview.classList.add('hidden'); // プレビューを非表示にする
+  }
+  
+  // マウスイベントの登録
+  uiElements.canvas.addEventListener('mousedown', onInteractionStart);
+  uiElements.canvas.addEventListener('mousemove', onInteractionMove);
+  uiElements.canvas.addEventListener('mouseup', onInteractionEnd);
+  
+  // タッチイベントの登録
+  uiElements.canvas.addEventListener('touchstart', onInteractionStart);
+  uiElements.canvas.addEventListener('touchmove', onInteractionMove);
+  uiElements.canvas.addEventListener('touchend', onInteractionEnd);
+  
+  /**
+  * イベントオブジェクトからキャンバス上の座標を取得する関数
+  * @param {Event} event - マウスまたはタッチイベント
+  * @param {HTMLCanvasElement} canvas - 対象のキャンバス要素
+  * @returns {object} { x, y } キャンバス上の座標
+  */
+  function getCanvasCoordinates(event, canvas) {
+    const rect = canvas.getBoundingClientRect();
+    let clientX, clientY;
+    if (event.touches && event.touches.length) {
+      clientX = event.touches[0].clientX;
+      clientY = event.touches[0].clientY;
+    } else {
+      clientX = event.clientX;
+      clientY = event.clientY;
+    }
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    return {
+      x: Math.floor((clientX - rect.left) * scaleX),
+      y: Math.floor((clientY - rect.top) * scaleY)
+    };
+  }
+  
   // カラー更新処理（アロー関数、分割代入）
-  const updateColorPreview = (event) => {
-    const { x, y } = getCanvasCoordinates(event, uiElements.canvas);
+  const updateColorPreview = (e) => {
+    const { x, y } = getCanvasCoordinates(e, uiElements.canvas);
     // オーバーレイ表示を更新
     uiElements.coordinateDisplay.textContent = `x: ${x}, y: ${y}`;
     const [r, g, b, a] = ctx.getImageData(x, y, 1, 1).data;
@@ -405,8 +415,8 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
     uiElements.colorPreview.style.color = isDarkColor(hex) ? '#ffffff' : '#000000';
     uiElements.colorPreview.textContent = hex;
     // container内の相対位置に変換（プレビューサイズは80pxなので半分の40pxを引く）
-    uiElements.colorPreview.style.left = `${event.clientX - containerRect.left - 40}px`;
-    uiElements.colorPreview.style.top = `${event.clientY - containerRect.top - 40}px`;
+    uiElements.colorPreview.style.left = `${e.clientX - containerRect.left - 40}px`;
+    uiElements.colorPreview.style.top = `${e.clientY - containerRect.top - 40}px`;
     uiElements.colorPreview.style.display = 'flex';
     console.log(hex);
   };
@@ -739,14 +749,14 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
       a.click();
     }
   });
-
-    // テーマ管理クラス
-    class ThemeManager {
-      constructor() {
-        this.currentMode = localStorage.getItem('theme') || 'light';
-        this.themeToggleBtn = uiElements.themeToggleBtn;
-        this.initialize();
-      }
+  
+  // テーマ管理クラス
+  class ThemeManager {
+    constructor() {
+      this.currentMode = localStorage.getItem('theme') || 'light';
+      this.themeToggleBtn = uiElements.themeToggleBtn;
+      this.initialize();
+    }
     
     initialize() {
       this.applyTheme();
@@ -763,16 +773,16 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
       this.themeToggleBtn.classList.toggle('text-black', !isDark);
       localStorage.setItem('theme', this.currentMode);
     }
-
-        toggleTheme() {
-          this.currentMode = this.currentMode === 'light' ? 'dark' : 'light';
-          this.applyTheme();
-        }
-      }
-      // -------------------------------
-      // テーマ切替・初期表示処理
-      // -------------------------------
-      this.themeManager = new ThemeManager();
+    
+    toggleTheme() {
+      this.currentMode = this.currentMode === 'light' ? 'dark' : 'light';
+      this.applyTheme();
+    }
+  }
+  // -------------------------------
+  // テーマ切替・初期表示処理
+  // -------------------------------
+  this.themeManager = new ThemeManager();
 </script>
 </body>
 </html>
