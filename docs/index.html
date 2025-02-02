@@ -363,15 +363,33 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
   uiElements.canvas.addEventListener('mousemove', onMouseMove);
   uiElements.canvas.addEventListener('mouseup', onMouseUp);
   
+      /**
+      * イベントオブジェクトからキャンバス上の座標を取得する関数
+      * @param {Event} event - マウスまたはタッチイベント
+      * @param {HTMLCanvasElement} canvas - 対象のキャンバス要素
+      * @returns {object} { x, y } キャンバス上の座標
+      */
+      function getCanvasCoordinates(event, canvas) {
+        const rect = canvas.getBoundingClientRect();
+        let clientX, clientY;
+        if (event.touches && event.touches.length) {
+          clientX = event.touches[0].clientX;
+          clientY = event.touches[0].clientY;
+        } else {
+          clientX = event.clientX;
+          clientY = event.clientY;
+        }
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        return {
+          x: Math.floor((clientX - rect.left) * scaleX),
+          y: Math.floor((clientY - rect.top) * scaleY)
+        };
+      }
+    
   // カラー更新処理（アロー関数、分割代入）
   const updateColorPreview = (event) => {
-    // キャンバスのサイズと表示サイズの差を補正するために
-    // getBoundingClientRect() を利用して実際の描画サイズを取得
-    const rect = uiElements.canvas.getBoundingClientRect();
-    const scaleX = uiElements.canvas.width / rect.width;
-    const scaleY = uiElements.canvas.height / rect.height;
-    const x = Math.floor((event.clientX - rect.left) * scaleX);
-    const y = Math.floor((event.clientY - rect.top) * scaleY);
+    const { x, y } = getCanvasCoordinates(event, uiElements.canvas);
     // オーバーレイ表示を更新
     uiElements.coordinateDisplay.textContent = `x: ${x}, y: ${y}`;
     const [r, g, b, a] = ctx.getImageData(x, y, 1, 1).data;
@@ -537,11 +555,7 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
   
   // マウス移動時にカーソル下の色を取得して表示
   uiElements.canvas.addEventListener('mousemove', (e) => {
-    const rect = uiElements.canvas.getBoundingClientRect();
-    const scaleX = uiElements.canvas.width / rect.width;
-    const scaleY = uiElements.canvas.height / rect.height;
-    const x = Math.floor((e.clientX - rect.left) * scaleX);
-    const y = Math.floor((e.clientY - rect.top) * scaleY);
+    const { x, y } = getCanvasCoordinates(event, uiElements.canvas);
     const pixel = ctx.getImageData(x, y, 1, 1).data;
     const [r, g, b, a] = pixel;
     if (a === 0) return;  // 透明な場合は無視
@@ -551,11 +565,7 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
   
   // クリック時に現在のカーソル色をカラーヒストリーに追加
   uiElements.canvas.addEventListener('click', (e) => {
-    const rect = uiElements.canvas.getBoundingClientRect();
-    const scaleX = uiElements.canvas.width / rect.width;
-    const scaleY = uiElements.canvas.height / rect.height;
-    const x = Math.floor((e.clientX - rect.left) * scaleX);
-    const y = Math.floor((e.clientY - rect.top) * scaleY);
+    const { x, y } = getCanvasCoordinates(event, uiElements.canvas);
     const pixel = ctx.getImageData(x, y, 1, 1).data;
     const [r, g, b, a] = pixel;
     if (a === 0) return;
