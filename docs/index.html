@@ -10,6 +10,12 @@
   <meta http-equiv="X-UA-Compatible" content="ie=edge" />
   <!-- Tailwind CSS CDN（簡易的な利用例） -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- TailwindCSSでdark modeを有効にするための設定例 -->
+  <script>
+    tailwind.config = {
+      darkMode: 'class'
+    }
+  </script>
   <meta property="og:url" content="https://haruharu-1105.github.io/MagicPaletteAnalyzer/">
   <meta property="og:type" content="website">
   <meta property="og:title" content="MagicPaletteAnalyzer">
@@ -17,32 +23,45 @@
   <meta name="google" content="notranslate">
 </head>
 
-<body>
+<body class="bg-gray-100 text-black mx-4 w-full dark:bg-gray-900 dark:text-white">
 
-  <body class="bg-gray-100 mx-4 w-full">
-    <!-- 固定ヘッダー -->
-    <header class="fixed top-0 left-0 w-full bg-white shadow z-50">
-      <h1 class="m-0 text-2xl font-bold px-4 py-4">✨MagicPalette Analyzer ver 0.0.1</h1>
-      <!-- 使用方法（アコーディオン） -->
-      <div class="ml-4">
-        <details class="border border-gray-300 px-4 py-4 rounded bg-white">
-          <summary class="text-lg font-semibold cursor-pointer">使用方法</summary>
-          <div class="mt-2 text-gray-700">
-            <p>1. 画像の読み込み</p>
-            <ul class="list-disc list-inside ml-4">
-              <li>a,「ファイルを選択」ボタンをクリックし、画像を選択します。</li>
-              <li>b,「ここに画像をドラッグ＆ドロップ」に画像をドロップします。</li>
-              <li>c, 画像をコピーした状態で「クリップボードから読み込む」ボタンをクリックします。</li>
-            </ul>
-            <p>2. パレットの内容確認：</p>
-            <ul class="list-disc list-inside ml-4">
-              <li>カラーパレットに分析された色が表示されます。</li>
-              <li>カラーヒストリーで選択した色の履歴を確認できます。</li>
-            </ul>
-          </div>
-        </details>
+  <!-- 固定ヘッダー -->
+  <header class="fixed top-0 left-0 w-full bg-white shadow z-50">
+    <!-- ヘッダー上部：タイトル・バージョン、GitHubリンク、テーマ切替 -->
+    <div class="flex items-center justify-between px-4 py-4">
+      <div>
+        <h1 class="text-2xl font-bold">MagicPaletteAnalyzer</h1>
+        <span class="text-sm text-gray-500">ver 0.0.1</span>
       </div>
-    </header>
+      <div class="flex items-center gap-4">
+        <a href="https://github.com/haruharu-1105/MagicPaletteAnalyzer" target="_blank" rel=”noopener”
+          class="text-blue-500 hover:underline">GitHub</a>
+        <!-- テーマ切替ボタン -->
+        <button id="theme-toggle" class="p-2 border rounded focus:outline-none">
+          Toggle Theme
+        </button>
+      </div>
+    </div>
+    <!-- 使用方法（アコーディオン） -->
+    <div class="ml-4">
+      <details class="border border-gray-300 px-4 py-4 rounded bg-white mt-2">
+        <summary class="text-lg font-semibold cursor-pointer">使用方法</summary>
+        <div class="mt-2 text-gray-700">
+          <p>1. 画像の読み込み</p>
+          <ul class="list-disc list-inside ml-4">
+            <li>a,「ファイルを選択」ボタンをクリックし、画像を選択します。</li>
+            <li>b,「ここに画像をドラッグ＆ドロップ」に画像をドロップします。</li>
+            <li>c, 画像をコピーした状態で「クリップボードから読み込む」ボタンをクリックします。</li>
+          </ul>
+          <p>2. パレットの内容確認：</p>
+          <ul class="list-disc list-inside ml-4">
+            <li>カラーパレットに分析された色が表示されます。</li>
+            <li>カラーヒストリーで選択した色の履歴を確認できます。</li>
+          </ul>
+        </div>
+      </details>
+      </div>
+      </header>
     <!-- ページ全体のレイアウト：サイドバーとメインコンテンツ -->
     <div class="flex pt-24">
       <!-- 左側のサイドバー（固定） -->
@@ -612,6 +631,47 @@
           a.href = dataURL;
           a.click();
         }
+      });
+      // -------------------------------
+      // テーマ切替・初期表示処理
+      // -------------------------------
+      const urlParams = new URLSearchParams(window.location.search);
+      let currentMode = urlParams.get('mode') || 'light';
+      const body = document.body;
+      const themeToggleBtn = document.getElementById('theme-toggle');
+
+      function setTheme(mode) {
+        if (mode === 'dark') {
+          body.classList.add('dark');
+          body.classList.remove('bg-gray-100');
+          body.classList.add('bg-gray-900');
+          // ボタン名称とテキスト色の変更（ダークモード時は「ライトモード」にして白文字）
+          themeToggleBtn.innerText = "ライトモード";
+          themeToggleBtn.classList.remove("text-black");
+          themeToggleBtn.classList.add("text-white");
+        } else {
+          body.classList.remove('dark');
+          body.classList.remove('bg-gray-900');
+          body.classList.add('bg-gray-100');
+          // ボタン名称とテキスト色の変更（ライトモード時は「ダークモード」にして黒文字）
+          themeToggleBtn.innerText = "ダークモード";
+          themeToggleBtn.classList.remove("text-white");
+          themeToggleBtn.classList.add("text-black");
+        }
+        localStorage.setItem('theme', mode);
+      }
+
+      // 初期設定（URLパラメータおよびlocalStorageから取得）
+      const storedTheme = localStorage.getItem('theme');
+      if (storedTheme) {
+        currentMode = storedTheme;
+      }
+      setTheme(currentMode);
+
+      // テーマ切替ボタンのクリックイベント
+      themeToggleBtn.addEventListener('click', function () {
+        currentMode = currentMode === 'light' ? 'dark' : 'light';
+        setTheme(currentMode);
       });
     </script>
   </body>
