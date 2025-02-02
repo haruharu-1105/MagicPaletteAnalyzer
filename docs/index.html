@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="ja">
-
 <head>
   <meta charset="UTF-8">
   <title>✨MagicPaletteAnalyzer - 画像から色を召喚する魔導具 ver 0.0.2</title>
@@ -23,12 +22,12 @@
 </head>
 <body class="bg-gray-100 text-black mx-4 w-full dark:bg-gray-900 dark:text-white">
   <!-- 固定ヘッダー -->
-  <header class="fixed top-0 left-0 w-full bg-white shadow z-50">
+  <header class="fixed top-0 left-0 w-full shadow z-50 dark:text-white">
     <!-- ヘッダー上部：タイトル・バージョン、GitHubリンク、テーマ切替 -->
     <div class="flex items-center justify-between px-4 py-4">
       <div>
         <h1 class="text-2xl font-bold">MagicPaletteAnalyzer</h1>
-        <span class="text-sm text-gray-500">ver 0.0.2</span>
+        <span class="text-sm text-gray-500 dark:text-white-500">ver 0.0.2</span>
       </div>
       <div class="flex items-center gap-4">
         <a href="https://github.com/haruharu-1105/MagicPaletteAnalyzer" target="_blank" rel="noopener"
@@ -41,7 +40,7 @@
     </div>
     <!-- 使用方法（アコーディオン） -->
     <div class="ml-4">
-      <details class="border border-gray-300 px-4 py-4 rounded bg-white mt-2">
+      <details class="border border-gray-300 px-4 py-4 rounded mt-2">
         <summary class="text-lg font-semibold cursor-pointer">使用方法</summary>
         <div class="mt-2 text-gray-700">
           <p>1. 画像の読み込み</p>
@@ -62,11 +61,11 @@
     <!-- ページ全体のレイアウト：サイドバーとメインコンテンツ -->
     <div class="flex pt-24">
       <!-- 左側のサイドバー（固定） -->
-      <aside class="fixed left-0 top-32 w-40 h-full bg-white shadow">
+      <aside class="fixed left-0 top-32 w-40 h-full shadow dark:text-white">
         <!-- 現在選択色表示 -->
         <h2 class="text-xl font-bold m-4">現在選択色</h2>
         <div id="color-info" class="flex flex-col items-center">
-          <div id="color-display" class="w-20 h-20 border border-black mb-4"></div>
+          <div id="color-display" class="w-20 h-20 border border-black dark:border-white mb-4"></div>
           <div class="text-sm">
             <div>HEX: <span id="color-hex">#FFFFFF</span></div>
             <div>RGB: <span id="color-rgb">255, 255, 255</span></div>
@@ -75,7 +74,7 @@
         </div>
       </aside>
       <!-- メインコンテンツ -->
-      <main class="flex-1 ml-40">
+      <main class="flex-1 ml-40 dark:text-white">
         <!-- コンテンツ全体（ヘッダー分の余白を確保） -->
         <div id="container" class="font-sans flex flex-col gap-2 my-8 max-w-full">
           <div id="image-container" class="border-2 border-dashed border-gray-300 " height="320px">
@@ -86,7 +85,7 @@
             <div class="flex items-center gap-3 mb-4">
               <input type="file" id="file-input" accept="image/*" class="p-2 border border-gray-300 py-2 rounded">
               <button id="paste-button"
-                class="px-16 bg-orange-500 text-white rounded hover:bg-orange-600 text-nowrap h-12">クリップボードから📋
+                class="px-16 bg-orange-500 rounded hover:bg-orange-600 text-nowrap h-12">クリップボードから📋
               </button>
               <div id="drop-area" class="w-full py-2.5 border-b-2 border-gray-400 bg-gray-50 text-center font-bold">
                 ここに画像をドラッグ＆ドロップ
@@ -145,7 +144,7 @@
                 <label for="palette-only">パレット情報のみダウンロードする</label>
               </div>
               <button id="download-palette"
-                class="mt-2 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600  disabled:bg-gray-300 disabled:cursor-not-allowed"
+                class="mt-2 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
                 disabled>
                 パレットダウンロード⬇
               </button>
