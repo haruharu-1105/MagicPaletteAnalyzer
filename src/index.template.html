@@ -47,7 +47,7 @@
     <div class="flex items-center justify-between px-4 py-2">
       <div>
         <!-- タイトル -->
-        <h1 class="text-2xl font-bold">MagicPaletteAnalyzer✨🎨🔍️</h1>
+        <h1 class="text-2xl font-bold">MagicPaletteAnalyzer<span class="hidden md:inline">✨🎨🔍</span></h1>
         <!-- バージョン -->
         <span class="text-sm text-gray-500 dark:text-white-500">ver 0.0.3</span>
       </div>
@@ -73,10 +73,10 @@
         </div>
         <!-- GitHubリンク -->
         <a href="https://github.com/haruharu-1105/MagicPaletteAnalyzer" target="_blank" rel="noopener"
-        class="text-blue-500 hover:underline">GitHub</a>
+        class="hidden md:inline text-blue-500 hover:underline">GitHub</a>
         <!-- テーマ切替ボタン -->
         <button id="theme-toggle" class="p-2 border rounded focus:outline-none">
-          Toggle Theme
+          <span></span><span class="hidden md:inline">モードへ</span>
         </button>
       </div>
     </div>
@@ -137,7 +137,7 @@
           <input type="file" id="file-input" accept="image/*" class="p-2 border border-gray-300 py-2 rounded">
           <button id="paste-button" class="px-16 bg-orange-500 rounded hover:bg-orange-600 text-nowrap h-12">クリップボードから📋
           </button>
-          <div id="drop-area" class="w-full py-2.5 border-b-2 border-gray-400 bg-gray-50 text-center font-bold">
+          <div id="drop-area" class="hidden md:inline w-full py-2.5 border-b-2 border-gray-400 bg-gray-50 text-center font-bold">
             ここに画像をドラッグ＆ドロップ
           </div>
         </div>

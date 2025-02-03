@@ -3,3 +3,5 @@
 *.log
 # shortcut file
 *.lnk
+# win merge backup file
+*.bak

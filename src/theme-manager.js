@@ -26,7 +26,7 @@
       document.body.classList.toggle('dark', isDark);
       document.body.classList.toggle('bg-gray-900', isDark);
       document.body.classList.toggle('bg-gray-100', !isDark);
-      this.themeToggleBtn.textContent = isDark ? "☀️ライトモードへ" : "🌙ダークモードへ";
+      this.themeToggleBtn.firstChild.textContent = isDark ? "☀ライト" : "🌙ダーク";
       this.themeToggleBtn.classList.toggle('text-white', isDark);
       this.themeToggleBtn.classList.toggle('text-black', !isDark);
       localStorage.setItem('theme', this.currentMode);
