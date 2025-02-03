@@ -43,10 +43,12 @@
 <body class="bg-gray-100 text-[#1a1a1a] dark:text-[#e0e0e0] mx-4 w-full dark:bg-gray-900">
   <!-- 固定ヘッダー -->
   <header class="fixed top-0 left-0 w-full shadow z-50 bg-white dark:text-[#e0e0e0] dark:bg-gray-800">
-    <!-- ヘッダー上部：タイトル・バージョン、GitHubリンク、テーマ切替 -->
+    <!-- ヘッダー上部：タイトル・バージョン、使用方法（アコーディオン）、GitHubリンク、テーマ切替 -->
     <div class="flex items-center justify-between px-4 py-2">
       <div>
+        <!-- タイトル -->
         <h1 class="text-2xl font-bold">MagicPaletteAnalyzer✨🎨🔍️</h1>
+        <!-- バージョン -->
         <span class="text-sm text-gray-500 dark:text-white-500">ver 0.0.2</span>
       </div>
       <div class="flex items-center gap-4">
@@ -69,6 +71,7 @@
             </div>
           </details>
         </div>
+        <!-- GitHubリンク -->
         <a href="https://github.com/haruharu-1105/MagicPaletteAnalyzer" target="_blank" rel="noopener"
         class="text-blue-500 hover:underline">GitHub</a>
         <!-- テーマ切替ボタン -->
@@ -112,6 +115,7 @@
             x: 0, y: 0
           </div>
         </div>
+        <!-- ファイル選択、クリップボードから、ドラッグ＆ドロップ領域 -->
         <div class="flex items-center gap-3 mb-4">
           <input type="file" id="file-input" accept="image/*" class="p-2 border border-gray-300 py-2 rounded">
           <button id="paste-button" class="px-16 bg-orange-500 rounded hover:bg-orange-600 text-nowrap h-12">クリップボードから📋
@@ -186,8 +190,6 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
 </button>
 </main>
 </div>
-</div>
-
 <script>
   // ------------------------------------------------
   // ColorHelper クラス（色変換・情報取得用のユーティリティクラス）
@@ -611,6 +613,29 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
     uiElements.downloadHistoryBtn.disabled = uiElements.historyContainer.length > 0;
   }
   
+    /**
+    * 指定のコンテナ内の各カラーボックスをキャンバスに描画する共通関数
+    * @param {CanvasRenderingContext2D} ctx - 描画先のキャンバスコンテキスト
+    * @param {HTMLElement} container - カラーボックスが含まれるコンテナ（例：historyContainer や paletteContainer）
+    * @param {number} itemSize - 各色ボックスのサイズ（ピクセル）
+    * @param {number} columns - 1行あたりのボックス数
+    * @param {number} offsetY - キャンバス上に描画する際の縦方向のオフセット
+    */
+    function drawColorBoxes(ctx, container, itemSize, columns, offsetY) {
+      const items = container.querySelectorAll('.color-box');
+      items.forEach((item, index) => {
+        const col = index % columns;
+        const row = Math.floor(index / columns);
+        // title 属性に hex が入っている前提（もしくは style.backgroundColor）
+        const hex = item.title || item.style.backgroundColor;
+        ctx.fillStyle = hex;
+        ctx.fillRect(col * itemSize, offsetY + row * itemSize, itemSize, itemSize);
+        // 境界線の描画
+        ctx.strokeStyle = "#000";
+        ctx.strokeRect(col * itemSize, offsetY + row * itemSize, itemSize, itemSize);
+      });
+    }
+  
   // ヒストリー画像ダウンロード処理
   uiElements.downloadHistoryBtn.addEventListener('click', () => {
     // ヒストリー内の色ボックスをまとめたキャンバスを作成
@@ -676,9 +701,7 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
     }
   });
   
-  
-  
-  // ダウンロード処理
+    // パレットダウンロード処理
   uiElements.downloadPaletteBtn.addEventListener('click', () => {
     const selectedOption = document.querySelector('input[name="download-option"]:checked').value;
     
@@ -733,7 +756,10 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
     }
   });
   
-  // スクロールイベントで「一番上に戻る」ボタンの表示切替
+    /**
+    * 一番上にスクロール機能
+    */
+    // スクロールイベントで「一番上にスクロール」ボタンの表示切替
   window.addEventListener('scroll', () => {
     // ヘッダーの高さ（この例では約80px）
     const headerHeight = 80;
@@ -748,19 +774,28 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
   uiElements.scrollToTopButton.addEventListener('click', () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
+
   // テーマ管理クラス
   class ThemeManager {
+    /**
+    * コンストラクタ
+    * ブラウザのローカルストレージに選択したテーマ（ライトモード・ダークモード）を保存し、表示時に使用します。
+    */
     constructor() {
       this.currentMode = localStorage.getItem('theme') || 'light';
       this.themeToggleBtn = uiElements.themeToggleBtn;
       this.initialize();
     }
-    
+    /**
+    * 初期化関数
+    */
     initialize() {
       this.applyTheme();
       this.themeToggleBtn.addEventListener('click', () => this.toggleTheme());
     }
-    
+    /**
+    * テーマを適用し画面に表示する関数
+    */
     applyTheme() {
       const isDark = this.currentMode === 'dark';
       document.body.classList.toggle('dark', isDark);
@@ -771,12 +806,15 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
       this.themeToggleBtn.classList.toggle('text-black', !isDark);
       localStorage.setItem('theme', this.currentMode);
     }
-    
+    /**
+    * テーマを切り替える関数
+    */
     toggleTheme() {
       this.currentMode = this.currentMode === 'light' ? 'dark' : 'light';
       this.applyTheme();
     }
   }
+
   // -------------------------------
   // テーマ切替・初期表示処理
   // -------------------------------
