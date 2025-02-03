@@ -308,7 +308,7 @@
     colorDiv.style.color = isDarkColor(hex) ? "#ffffff" : "#000000";
     colorDiv.title = hex;
     colorDiv.textContent = hex;
-    uiElements.historyContainer.appendChild(colorDiv);
+    uiElements.historyContainer.prepend(colorDiv);
     // ヒストリーに項目が追加されたので、ダウンロードボタンを有効化
     uiElements.downloadHistoryBtn.disabled = uiElements.historyContainer.length > 0;
   }

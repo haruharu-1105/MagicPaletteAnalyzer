@@ -84,16 +84,33 @@
   <!-- ページ全体のレイアウト：サイドバーとメインコンテンツ -->
   <div class="flex pt-24">
     <!-- 左側のサイドバー（固定） -->
-    <aside class="fixed left-0 top-32 w-40 h-full shadow dark:text-[#e0e0e0] z-30">
-      <!-- 現在選択色表示 -->
-      <h2 class="text-xl font-bold m-4">現在選択色</h2>
-      <div id="color-info" class="flex flex-col items-center">
-        <div id="color-display" class="w-20 h-20 border border-[#1a1a1a] dark:border-[#e0e0e0] mb-4"></div>
-        <div class="text-sm">
-          <div>HEX: <span id="color-hex">#FFFFFF</span></div>
-          <div>RGB: <span id="color-rgb">255, 255, 255</span></div>
-          <div>HSV: <span id="color-hsv">0, 0, 100</span></div>
+    <aside class="fixed left-0 top-32 w-40 h-full shadow dark:text-[#e0e0e0] z-30 ml-2">
+      <div id="aside-container">
+        <div id="color-info" class="flex flex-col">
+          <!-- 現在選択色表示 -->
+          <h2 class="text-xl font-bold">現在選択色</h2>
+          <div id="color-display" class="ml-4 text-center w-20 h-20 border border-[#1a1a1a] dark:border-[#e0e0e0]"></div>
+          <div class="text-sm">
+            <div>HEX: <span id="color-hex">#FFFFFF</span></div>
+            <div>RGB: <span id="color-rgb">255, 255, 255</span></div>
+            <div>HSV: <span id="color-hsv">0, 0, 100</span></div>
+          </div>
         </div>
+      <!-- カラーヒストリー表示 -->
+      <div id="history" class="border border-gray-300 h-full p-2.5 mt-4">
+        <!-- ヒストリーのタイトルとダウンロードボタンを同じ行に配置 -->
+        <h3 class="text-lg font-semibold px-4">履歴</h3>
+        <div class="flex flex-col">
+          <button id="download-history"
+          class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
+          disabled>
+          画像ダウンロード⬇
+          </button>
+      </div>
+      <hr>
+      <!-- ヒストリーの色ボックスを最大16列で表示 -->
+      <div id="history-colors" class="grid grid-cols-1 gap-2 mt-2 max-h-[712px] overflow-y-auto">
+        <!-- ヒストリーの色ボックスがここに追加されます -->
       </div>
     </aside>
     <!-- メインコンテンツ -->
@@ -131,22 +148,6 @@
         <h3 class="text-lg font-semibold">🎨画像のパレット</h3>
         <div id="palette-colors" class="grid gap-1 mt-2"
         style="grid-template-columns: repeat(16, 40px); grid-template-rows: repeat(4, 40px);">
-      </div>
-      
-      <!-- カラーヒストリー表示 -->
-      <div id="history" class="border border-gray-300 p-2.5 mt-4">
-        <!-- ヒストリーのタイトルとダウンロードボタンを同じ行に配置 -->
-        <div class="flex items-center">
-          <h3 class="text-lg font-semibold px-4">カラーヒストリー</h3>
-          <button id="download-history"
-          class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
-          disabled>
-          画像ダウンロード⬇
-        </button>
-      </div>
-      <!-- ヒストリーの色ボックスを最大16列で表示 -->
-      <div id="history-colors" class="grid gap-1 mt-2" style="grid-template-columns: repeat(16, 64px);">
-        <!-- ヒストリーの色ボックスがここに追加されます -->
       </div>
       <!-- カラーヒストリーのダウンロードオプション -->
       <div class="mt-4">
