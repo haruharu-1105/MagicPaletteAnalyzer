@@ -80,6 +80,17 @@ class BuildProcess {
         }
     }
 
+    # ファイルのバックアップを作成 (_backup を付加)
+    BackupFile($filePath) {
+        if (Test-Path $filePath) {
+            $backupFile = $filePath -replace '\.([^\.]+)$', '_backup.$1'  # "index.html" → "index_backup.html"
+            Copy-Item -Path $filePath -Destination $backupFile -Force
+            Write-Host "OK: バックアップを作成しました -> $backupFile"
+        } else {
+            Write-Host "!!: バックアップ不要（$filePath が存在しないためスキップ）"
+        }
+    }
+
     # ビルド処理
     Build() {
         Write-Host "`n=== ビルド処理を開始 ==="
@@ -99,6 +110,9 @@ class BuildProcess {
 
         # テンプレート内のプレースホルダーを置換
         $template = $template -replace '<!-- INLINE_JS -->', $jsContent
+
+        # バックアップ作成
+        $this.BackupFile($this.outputFile)
 
         # 出力ファイルを書き込む（BOMなしUTF-8）
         $this.WriteFileUTF8NoBOM($this.outputFile, $template)
