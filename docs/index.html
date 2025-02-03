@@ -23,7 +23,19 @@
     #canvas-container {
       position: relative;
     }
-    #color-preview {
+    .color-preview {
+      position: absolute;
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      border: 3px solid white;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      font-size: 16px;
+      font-weight: bold;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+      pointer-events: none;
       transition: transform 0.1s ease-out;
     }
   </style>
@@ -93,7 +105,7 @@
             
             <!-- ColorPreview（キャンバスの上に表示するレイヤー） -->
             <div id="color-preview"
-            class="absolute hidden w-20 h-20 border-4 border-white rounded-full flex items-center justify-center font-bold text-lg text-white shadow-lg pointer-events-none z-40">
+            class="color-preview absolute hidden w-20 h-20 border-4 border-white rounded-full flex items-center justify-center font-bold text-lg text-white shadow-lg pointer-events-none z-40 ">
           </div>
           <!-- 座標表示オーバーレイ -->
           <div id="coordinate-display" class="fixed bottom-4 right-4 bg-gray-800 text-white px-3 py-1 rounded shadow-lg z-50">
@@ -314,21 +326,6 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
   });
   
   let lastColor = null;
-  // 
-  uiElements.colorPreview.style.position = 'absolute';
-  uiElements.colorPreview.style.width = '80px';
-  uiElements.colorPreview.style.height = '80px';
-  uiElements.colorPreview.style.borderRadius = '50%';
-  uiElements.colorPreview.style.border = '3px solid white';
-  uiElements.colorPreview.style.display = 'none';
-  uiElements.colorPreview.style.justifyContent = 'center';
-  uiElements.colorPreview.style.alignItems = 'center';
-  uiElements.colorPreview.style.fontSize = '16px';
-  uiElements.colorPreview.style.fontWeight = 'bold';
-  uiElements.colorPreview.style.textShadow = '1px 1px 2px rgba(0, 0, 0, 0.7)';
-  uiElements.colorPreview.style.pointerEvents = 'none';
-  
-  
   // 共通のフラグ（ドラッグ中かどうか）
   let isDragging = false;
   
@@ -375,19 +372,19 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
   
   /**
   * イベントオブジェクトからキャンバス上の座標を取得する関数
-  * @param {Event} event - マウスまたはタッチイベント
+  * @param {Event} e - マウスまたはタッチイベント
   * @param {HTMLCanvasElement} canvas - 対象のキャンバス要素
   * @returns {object} { x, y } キャンバス上の座標
   */
-  function getCanvasCoordinates(event, canvas) {
+  function getCanvasCoordinates(e, canvas) {
     const rect = canvas.getBoundingClientRect();
     let clientX, clientY;
-    if (event.touches && event.touches.length) {
-      clientX = event.touches[0].clientX;
-      clientY = event.touches[0].clientY;
+    if (e.touches && e.touches.length) {
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
     } else {
-      clientX = event.clientX;
-      clientY = event.clientY;
+      clientX = e.clientX;
+      clientY = e.clientY;
     }
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
@@ -611,7 +608,7 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
     colorDiv.textContent = hex;
     uiElements.historyContainer.appendChild(colorDiv);
     // ヒストリーに項目が追加されたので、ダウンロードボタンを有効化
-    uiElements.downloadHistoryBtn.disabled = uiElements.paletteContainer.length > 0;
+    uiElements.downloadHistoryBtn.disabled = uiElements.historyContainer.length > 0;
   }
   
   // ヒストリー画像ダウンロード処理
@@ -679,21 +676,7 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
     }
   });
   
-  // スクロールイベントで「一番上に戻る」ボタンの表示切替
-  window.addEventListener('scroll', () => {
-    // ヘッダーの高さ（この例では約80px）
-    const headerHeight = 80;
-    if (window.scrollY > headerHeight) {
-      uiElements.scrollToTopButton.classList.remove('hidden');
-    } else {
-      uiElements.scrollToTopButton.classList.add('hidden');
-    }
-  });
   
-  // 「一番上にスクロール」ボタンのクリックでスムーズスクロール
-  uiElements.scrollToTopButton.addEventListener('click', () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  });
   
   // ダウンロード処理
   uiElements.downloadPaletteBtn.addEventListener('click', () => {
@@ -750,6 +733,21 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
     }
   });
   
+  // スクロールイベントで「一番上に戻る」ボタンの表示切替
+  window.addEventListener('scroll', () => {
+    // ヘッダーの高さ（この例では約80px）
+    const headerHeight = 80;
+    if (window.scrollY > headerHeight) {
+      uiElements.scrollToTopButton.classList.remove('hidden');
+    } else {
+      uiElements.scrollToTopButton.classList.add('hidden');
+    }
+  });
+  
+  // 「一番上にスクロール」ボタンのクリックでスムーズスクロール
+  uiElements.scrollToTopButton.addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
   // テーマ管理クラス
   class ThemeManager {
     constructor() {
