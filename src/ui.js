@@ -139,6 +139,15 @@
   function loadImage(file) {
     const reader = new FileReader();
     reader.onload = function (e) {
+      // 古い img の参照を解放
+      if (img) {
+        img.onload = null;   // イベントハンドラを解除
+        if (img.src && img.src.startsWith('blob:')) {
+          URL.revokeObjectURL(img.src);  // Blob URL を解放
+        }
+        img.src = "";         // 画像の参照を解除
+        img = null;           // 参照を完全に切り離す
+      }
       img = new Image();
       img.onload = function () {
         // キャンバスサイズを画像サイズに合わせる
