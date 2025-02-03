@@ -8,9 +8,6 @@ Set-Location $scriptDir
 # 設定
 # ==========================
 $template_file = "src/index.template.html"
-$output_file = "dist/index.html"
-$artifactFile = "dist/build_artifacts_hashes.txt"
-
 # JavaScriptファイルの読み込み順を定義
 $jsFiles = @(
     "src/color-helper.js",
@@ -19,24 +16,22 @@ $jsFiles = @(
     "src/main.js"
 )
 
-# 入力ファイルリストの定義
-$inputFiles = @($template_file) + $jsFiles
-
 # ==========================
 # BuildProcess クラス
 # ==========================
 class BuildProcess {
     [string]$artifactFile
-    [array]$inputFiles
+    [array]$inputFiles # 入力ファイルリスト
     [array]$jsFiles
     [string]$templateFile
     [string]$outputFile
 
-    BuildProcess($templateFile, $jsFiles, $outputFile, $artifactFile) {
+    BuildProcess($templateFile, $jsFiles) {
         $this.templateFile = $templateFile
         $this.jsFiles = $jsFiles
-        $this.outputFile = $outputFile
-        $this.artifactFile = $artifactFile
+        $this.outputFile = "dist/index.html"
+        $this.artifactFile = "dist/build_artifacts_hashes.txt"
+        $this.inputFiles = @($templateFile) + $jsFiles
     }
 
     # ファイルをUTF-8で読み込む（BOMなし）
@@ -65,18 +60,29 @@ class BuildProcess {
     }
 
     # ハッシュ生成
-    GenerateFileHashes($inputFiles) {
-        Write-Host "`n=== ビルド構成物のハッシュを生成 ==="
+    GenerateFileHashes() {
+        Write-Host "`n=== ビルド構成物の証跡ハッシュを生成 ==="
         "Build Input Hashes:" | Out-File $this.artifactFile -Encoding utf8
-        foreach ($file in $inputFiles) {
+        foreach ($file in $this.inputFiles) {
             if (Test-Path $file) {
                 $hash = (Get-FileHash $file -Algorithm SHA256).Hash
                 "$($file): $hash" | Out-File $this.artifactFile -Append -Encoding utf8
-                Write-Host "OK: ハッシュを生成しました -> $file"
             } else {
                 "$($file): Not Found" | Out-File $this.artifactFile -Append -Encoding utf8
-                Write-Host "!!: ファイルが見つかりません、ハッシュ生成をスキップします -> $file"
+                Write-Host "!!: ファイルが見つかりません、ハッシュを記録できません。 -> $file"
+                exit 1
             }
+        }
+
+        # ビルド生成物のハッシュ
+        "`nBuild Output Hash:" | Out-File $this.artifactFile -Append -Encoding utf8
+        if (Test-Path $this.outputFile) {
+            $outputHash = (Get-FileHash $this.outputFile -Algorithm SHA256).Hash
+            "$($this.outputFile): $outputHash" | Out-File $this.artifactFile -Append -Encoding utf8
+        } else {
+            "$($this.outputFile): Not Generated" | Out-File $this.artifactFile -Append -Encoding utf8
+            Write-Host "!!: 生成物が見つからないため、ハッシュを記録できません。"
+            exit 1
         }
     }
 
@@ -116,31 +122,20 @@ class BuildProcess {
 
         # 出力ファイルを書き込む（BOMなしUTF-8）
         $this.WriteFileUTF8NoBOM($this.outputFile, $template)
-
+        
         # ビルド生成物のハッシュ
-        Write-Host "`n=== ビルド生成物のハッシュを生成 ==="
-        "`nBuild Output Hash:" | Out-File $this.artifactFile -Append -Encoding utf8
+        $this.GenerateFileHashes()
 
-        if (Test-Path $this.outputFile) {
-            $outputHash = (Get-FileHash $this.outputFile -Algorithm SHA256).Hash
-            "$($this.outputFile): $outputHash" | Out-File $this.artifactFile -Append -Encoding utf8
-            Write-Host "OK: 生成物のハッシュを記録しました -> $this.outputFile"
-        } else {
-            "$($this.outputFile): Not Generated" | Out-File $this.artifactFile -Append -Encoding utf8
-            Write-Host "!!: 生成物が見つからないため、ハッシュを記録できません。"
-            exit 1
-        }
-
-        Write-Host "OK: ビルド完了: $this.outputFile が生成されました。"
-        Write-Host "アーティファクトファイル: $this.artifactFile"
+        Write-Host "`n=== ビルド完了 ==="
+        Write-Host "成果物: $($this.outputFile)"
+        Write-Host "アーティファクトファイル: $($this.artifactFile)"
     }
 }
 
 # ==========================
 # ビルドプロセス開始
 # ==========================
-$buildProcess = [BuildProcess]::new($template_file, $jsFiles, $output_file, $artifactFile)
-$buildProcess.GenerateFileHashes($inputFiles)
+$buildProcess = [BuildProcess]::new($template_file, $jsFiles)
 $buildProcess.Build()
 
 exit 0
