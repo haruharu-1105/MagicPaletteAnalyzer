@@ -24,10 +24,10 @@ $jsFiles = @(
 # ファイルをUTF-8で読み込む（BOMなし）
 function Read-FileUTF8($path) {
     if (-not (Test-Path $path)) {
-        Write-Host "警告: ファイルが見つかりません -> $path"
+        Write-Host "!!: ファイルが見つかりません -> $path"
         return ""
     }
-    Write-Host "正常: ファイルを読み込みました -> $path"
+    Write-Host "OK: ファイルを読み込みました -> $path"
     return Get-Content -Raw -Path $path -Encoding UTF8
 }
 # ファイルをUTF-8 (BOMなし) で書き込む（.NET FrameworkのStreamWriterを使用）
@@ -37,9 +37,9 @@ function Write-FileUTF8NoBOM($path, $content) {
         $writer = [System.IO.StreamWriter]::new($path, $false, $encoding)
         $writer.Write($content)
         $writer.Close()
-        Write-Host "成功: $path をBOMなしUTF-8で保存しました。"
+        Write-Host "OK: $path をBOMなしUTF-8で保存しました。"
     } catch {
-        Write-Host "エラー: ファイル書き込みに失敗しました -> $path"
+        Write-Host "NG: ファイル書き込みに失敗しました -> $path"
     }
 }
 
@@ -50,7 +50,7 @@ function Write-FileUTF8NoBOM($path, $content) {
 # テンプレートファイルの読み込み
 $template = Read-FileUTF8 $template_file
 if ($template -eq "") {
-    Write-Host "エラー: テンプレートの読み込みに失敗したため、処理を中断します。"
+    Write-Host "NG: テンプレートの読み込みに失敗したため、処理を中断します。"
     exit 1
 }
 
@@ -68,4 +68,5 @@ $template = $template -replace '<!-- INLINE_JS -->', $jsContent
 Write-FileUTF8NoBOM $output_file $template
 
 
-Write-Host "ビルド完了: $outputFile が生成されました。"
+Write-Host "OK:ビルド完了: $outputFile が生成されました。"
+exit 0
