@@ -15,6 +15,7 @@ $jsFiles = @(
     "src/model.js",
     "src/view.js",
     "src/controller.js",
+    "src/color_helper.js",    
     "src/main.js"
 )
 
@@ -58,7 +59,7 @@ if ($template -eq "") {
 # すべてのJSファイルの内容を結合
 $jsContent = ""
 foreach ($file in $jsFiles) {
-    $jsContent += "`n" + (Read-FileUTF8 $file) + "`n"
+    $jsContent += (Read-FileUTF8 $file)
 }
 
 # テンプレート内のプレースホルダーを置換
