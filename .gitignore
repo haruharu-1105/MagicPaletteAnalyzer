@@ -1,3 +1,5 @@
 #  Ignore file extensions
 # log file
 *.log
+# shortcut file
+*.lnk
