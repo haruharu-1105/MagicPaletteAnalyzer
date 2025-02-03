@@ -3,9 +3,11 @@
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Definition
 Set-Location $scriptDir
 
-# 各ファイルの読み込み
-$template = Get-Content -Raw -Path "index.template.html"
-$cssContent = Get-Content -Raw -Path "src/styles.css"
+# ==========================
+# 設定
+# ==========================
+$template_file = "src/index.template.html"
+$output_file = "index.html"
 
 # JavaScriptファイルの読み込み順を定義
 $jsFiles = @(
@@ -16,22 +18,54 @@ $jsFiles = @(
     "src/main.js"
 )
 
-# すべてのJSファイルの内容を結合
-$jsContent = ""
-foreach ($file in $jsFiles) {
-    if (Test-Path $file) {
-        $jsContent += "`n" + (Get-Content -Raw -Path $file) + "`n"
-    } else {
-        Write-Host "警告: ファイルが見つかりません -> $file"
+# ==========================
+# 関数定義
+# ==========================
+# ファイルをUTF-8で読み込む（BOMなし）
+function Read-FileUTF8($path) {
+    if (-not (Test-Path $path)) {
+        Write-Host "警告: ファイルが見つかりません -> $path"
+        return ""
+    }
+    Write-Host "正常: ファイルを読み込みました -> $path"
+    return Get-Content -Raw -Path $path -Encoding UTF8
+}
+# ファイルをUTF-8 (BOMなし) で書き込む（.NET FrameworkのStreamWriterを使用）
+function Write-FileUTF8NoBOM($path, $content) {
+    try {
+        $encoding = New-Object System.Text.UTF8Encoding($false)  # BOMなしUTF-8
+        $writer = [System.IO.StreamWriter]::new($path, $false, $encoding)
+        $writer.Write($content)
+        $writer.Close()
+        Write-Host "成功: $path をBOMなしUTF-8で保存しました。"
+    } catch {
+        Write-Host "エラー: ファイル書き込みに失敗しました -> $path"
     }
 }
 
+# ==========================
+# ビルド処理
+# ==========================
+
+# テンプレートファイルの読み込み
+$template = Read-FileUTF8 $template_file
+if ($template -eq "") {
+    Write-Host "エラー: テンプレートの読み込みに失敗したため、処理を中断します。"
+    exit 1
+}
+
+
+# すべてのJSファイルの内容を結合
+$jsContent = ""
+foreach ($file in $jsFiles) {
+    $jsContent += "`n" + (Read-FileUTF8 $file) + "`n"
+}
+
 # テンプレート内のプレースホルダーを置換
-$template = $template -replace '<!-- INLINE_CSS -->', $cssContent
 $template = $template -replace '<!-- INLINE_JS -->', $jsContent
 
-# 出力ファイル名を指定して保存
-$outputFile = "index.html"
-$template | Out-File -Encoding UTF8 $outputFile
+# 出力ファイルを書き込む（BOMなしUTF-8）
+Write-FileUTF8NoBOM $output_file $template
 
-Write-Host "? ビルド完了: $outputFile が生成されました。"
+
+Write-Host "ビルド完了: $outputFile が生成されました。"
