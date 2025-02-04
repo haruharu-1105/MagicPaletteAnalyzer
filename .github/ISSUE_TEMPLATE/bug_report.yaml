@@ -1,0 +1,94 @@
+name: "Bug Report"
+description: "アプリの不具合を報告します"
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        # 不具合報告ありがとうございます！
+
+  - type: markdown
+    attributes:
+      value: |
+        ## お手数ですが、上記の「Title」と問1～7を記入後に下部の「Submit new Issue」ボタンを押して報告して下さいな。
+
+  - type: dropdown
+    id: feature
+    attributes:
+      label: "問1, どの機能に関する不具合ですか？"
+      options:
+        - 画像の読み込み（ファイル・ドラッグ＆ドロップ・クリップボード）
+        - パレットの生成
+        - パレットのダウンロード
+        - ユーザーインターフェース（UI）
+        - その他
+    validations:
+      required: true
+
+  - type: input
+    id: other_feature
+    attributes:
+      label: "【任意】「その他」を選択した場合、詳細を入力してください"
+      placeholder: "例：カラーピッカー"
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: "問2, 不具合の内容"
+      description: |
+        どのような不具合が発生しましたか？詳細を記入してください
+      value: |
+        ### 発生した問題
+        例: 画像をアップロードしても、パレットが生成されない。
+
+        ### 期待する動作
+        例: 画像をアップロードしたら、自動的にパレットが生成される。
+
+        ### 再現手順
+        1. xxx画像をアップロード
+        2. 「パレット生成」ボタンを押す
+        3. エラーが発生する or 画面が変わらない
+
+  - type: dropdown
+    id: device
+    attributes:
+      label: "問3, どの環境でアプリを使用しましたか？"
+      options:
+        - Windows
+        - macOS
+        - Linux
+        - iOS
+        - Android
+        - その他
+    validations:
+      required: true
+ 
+  - type: dropdown
+    id: browsers
+    attributes:
+      label: "問4, どのブラウザで問題が発生しましたか？"
+      multiple: true
+      options:
+        - Chrome
+        - Safari
+        - Microsoft Edge
+        - Firefox
+        - その他
+
+  - type: input
+    id: version
+    attributes:
+      label: "問5, アプリのバージョン情報"
+      description: "アプリの左上に表示されるバージョン情報を記入してください"
+
+  - type: textarea
+    id: error_log
+    attributes:
+      label: "問6, エラーメッセージ・コンソールログがあれば貼り付けてください"
+      placeholder: "エラーが発生した場合、開発者ツール（F12キー）でコンソールログを取得し、ここに貼り付けてください"
+
+  - type: textarea
+    id: extras
+    attributes:
+      label: "問7, 特記事項（再現頻度、追加情報）"
+      placeholder: "特記事項があれば記入してください"

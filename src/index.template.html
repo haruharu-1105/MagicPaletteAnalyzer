@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>✨MagicPaletteAnalyzer - 画像から色を召喚する魔導具 ver 0.0.3</title>
+  <meta name="viewport" content="initial-scale=1.0,width=device-width,viewport-fit=cover">
+  <meta name="description"
+  content="MagicPaletteAnalyzer - 画像に宿る色の精霊を可視化するカラーパレット生成ツール。瞳の色から風景まで、あらゆる画像を16色の魔方陣へ変換。術師のための色彩錬金術ツール。">
+  <!-- Tailwind CSS CDN（簡易的な利用例） -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- TailwindCSSでdark modeを有効にするための設定例 -->
+  <script>
+    tailwind.config = {
+      darkMode: 'class'
+    }
+  </script>
+  <meta property="og:url" content="https://haruharu-1105.github.io/MagicPaletteAnalyzer/">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="MagicPaletteAnalyzer">
+  <meta property="og:description" content="画像に潜む色の精霊を16色の魔法陣に封じ込め。瞳の輝きから風景の息吹まで、あらゆる画像を色彩錬金術で再構築。術師のためのパレット生成儀式。">
+  <meta name="google" content="notranslate">
+  <style>
+    #canvas-container {
+      position: relative;
+    }
+    .color-preview {
+      position: absolute;
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      border: 3px solid white;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      font-size: 16px;
+      font-weight: bold;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+      pointer-events: none;
+      transition: transform 0.1s ease-out;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 text-[#1a1a1a] dark:text-[#e0e0e0] mx-4 w-full dark:bg-gray-900">
+  <!-- 固定ヘッダー -->
+  <header class="fixed top-0 left-0 w-full shadow z-50 bg-white dark:text-[#e0e0e0] dark:bg-gray-800">
+    <!-- ヘッダー上部：タイトル・バージョン、使用方法（アコーディオン）、GitHubリンク、テーマ切替 -->
+    <div class="flex items-center justify-between px-4 py-2">
+      <div>
+        <!-- タイトル -->
+        <h1 class="text-2xl font-bold">MagicPaletteAnalyzer<span class="hidden md:inline">✨🎨🔍</span></h1>
+        <!-- バージョン -->
+        <span class="text-sm text-gray-500 dark:text-white-500">ver 0.0.3</span>
+      </div>
+      <div class="flex items-center gap-4">
+        <!-- 使用方法（アコーディオン） -->
+        <div class="ml-4">
+          <details class="border border-gray-300 p-2 rounded">
+            <summary class="text-lg font-semibold cursor-pointer">📋使用方法</summary>
+            <div>
+              <p>1. 画像の読み込み</p>
+              <ul class="list-disc list-inside ml-4">
+                <li>a,「ファイルを選択」ボタンをクリックし、画像を選択します。</li>
+                <li>b,「ここに画像をドラッグ＆ドロップ」に画像をドロップします。</li>
+                <li>c, 画像をコピーした状態で「クリップボードから読み込む」ボタンをクリックします。</li>
+              </ul>
+              <p>2. パレットの内容確認：</p>
+              <ul class="list-disc list-inside ml-4">
+                <li>カラーパレットに分析された色が表示されます。</li>
+                <li>カラーヒストリーで選択した色の履歴を確認できます。</li>
+              </ul>
+            </div>
+          </details>
+        </div>
+        <!-- GitHubリンク -->
+        <a href="https://github.com/haruharu-1105/MagicPaletteAnalyzer" target="_blank" rel="noopener"
+        class="hidden md:inline text-blue-500 hover:underline">GitHub</a>
+        <!-- テーマ切替ボタン -->
+        <button id="theme-toggle" class="p-2 border rounded focus:outline-none">
+          <span></span><span class="hidden md:inline">モードへ</span>
+        </button>
+      </div>
+    </div>
+  </header>
+  <!-- ページ全体のレイアウト：サイドバーとメインコンテンツ -->
+  <div class="flex pt-24">
+    <!-- 左側のサイドバー（固定） -->
+    <aside class="fixed left-0 top-32 w-40 h-full shadow dark:text-[#e0e0e0] z-30 ml-2">
+      <div id="aside-container">
+        <div id="color-info" class="flex flex-col">
+          <!-- 現在選択色表示 -->
+          <h2 class="text-xl font-bold">現在選択色</h2>
+          <div id="color-display" class="ml-4 text-center w-20 h-20 border border-[#1a1a1a] dark:border-[#e0e0e0]"></div>
+          <div class="text-sm">
+            <div>HEX: <span id="color-hex">#FFFFFF</span></div>
+            <div>RGB: <span id="color-rgb">255, 255, 255</span></div>
+            <div>HSV: <span id="color-hsv">0, 0, 100</span></div>
+          </div>
+        </div>
+      <!-- カラーヒストリー表示 -->
+      <div id="history" class="border border-gray-300 h-full p-2.5 mt-4">
+        <!-- ヒストリーのタイトルとダウンロードボタンを同じ行に配置 -->
+        <h3 class="text-lg font-semibold px-4">履歴</h3>
+        <div class="flex flex-col">
+          <button id="download-history"
+          class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
+          disabled>
+          画像ダウンロード⬇
+          </button>
+      </div>
+      <hr>
+      <!-- ヒストリーの色ボックスを最大16列で表示 -->
+      <div id="history-colors" class="grid grid-cols-1 gap-2 mt-2 max-h-[712px] overflow-y-auto">
+        <!-- ヒストリーの色ボックスがここに追加されます -->
+      </div>
+    </aside>
+    <!-- メインコンテンツ -->
+    <main class="flex-1 ml-40 dark:text-[#e0e0e0] z-30">
+      <!-- コンテンツ全体（ヘッダー分の余白を確保） -->
+      <div id="container" class="font-sans flex flex-col gap-2 max-w-full">
+        <!-- キャンバスのコンテナ -->
+        <div id="image-container" class="border-2 border-dashed border-gray-300 " height="320px">
+          <div id="canvas-container" class="relative w-full max-w-2xl mx-auto">
+            <!-- キャンバス -->
+            <canvas id="image-canvas" class="block w-full"></canvas>
+            
+            <!-- ColorPreview（キャンバスの上に表示するレイヤー） -->
+            <div id="color-preview"
+            class="color-preview absolute hidden w-20 h-20 border-4 border-white rounded-full flex items-center justify-center font-bold text-lg text-white shadow-lg pointer-events-none z-40 ">
+          </div>
+          <!-- 座標表示オーバーレイ -->
+          <div id="coordinate-display" class="fixed bottom-4 right-4 bg-gray-800 text-white px-3 py-1 rounded shadow-lg z-50">
+            x: 0, y: 0
+          </div>
+        </div>
+        <!-- ファイル選択、クリップボードから、ドラッグ＆ドロップ領域 -->
+        <div class="flex items-center gap-3 mb-4">
+          <input type="file" id="file-input" accept="image/*" class="p-2 border border-gray-300 py-2 rounded">
+          <button id="paste-button" class="px-16 bg-orange-500 rounded hover:bg-orange-600 text-nowrap h-12">クリップボードから📋
+          </button>
+          <div id="drop-area" class="hidden md:inline w-full py-2.5 border-b-2 border-gray-400 bg-gray-50 text-center font-bold">
+            ここに画像をドラッグ＆ドロップ
+          </div>
+        </div>
+        
+      </div>
+      <!-- 画像のパレット表示 -->
+      <div id="palette" class="border border-gray-300 p-2.5">
+        <h3 class="text-lg font-semibold">🎨画像のパレット</h3>
+        <div id="palette-colors" class="grid gap-1 mt-2"
+        style="grid-template-columns: repeat(16, 40px); grid-template-rows: repeat(4, 40px);">
+      </div>
+      <!-- カラーヒストリーのダウンロードオプション -->
+      <div class="mt-4">
+        <h3 class="text-lg font-semibold">ヒストリーのダウンロードオプション</h3>
+        <div>
+          <input type="radio" id="history-include-image" name="history-download-option" value="include" class="mr-2" checked>
+          <label for="history-include-image">元画像の下にヒストリー情報を追加してダウンロードする</label>
+        </div>
+        <div>
+          <input type="radio" id="history-only" name="history-download-option" value="history-only" class="mr-2">
+          <label for="history-only">ヒストリー情報のみダウンロードする</label>
+        </div>
+      </div>
+    </div>
+    <!-- ダウンロードオプション -->
+    <div class="mt-4">
+      <h3 class="text-lg font-semibold">パレットのダウンロードオプション</h3>
+      <div>
+        <input type="radio" id="include-image" name="download-option" value="include" class="mr-2" checked>
+        <label for="include-image">元画像の下にパレット情報を追加してダウンロードする</label>
+      </div>
+      <div>
+        <input type="radio" id="palette-only" name="download-option" value="palette-only" class="mr-2">
+        <label for="palette-only">パレット情報のみダウンロードする</label>
+      </div>
+      <button id="download-palette"
+      class="mt-2 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
+      disabled>
+      パレットダウンロード⬇
+    </button>
+  </div>
+  <!-- エラーメッセージ -->
+  <div id="error-message"
+  class="fixed bottom-0 left-0 w-full bg-[#e0e0e0] p-2.5 text-center text-red-500 border-t border-gray-300 z-50">
+</div>
+
+<!-- 一番上にスクロールボタン（初期状態は非表示） -->
+<button id="scroll-to-top"
+class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shadow-lg hidden hover:bg-blue-600 z-50">
+一番上にスクロール
+</button>
+</main>
+</div>
+  <!-- インライン JavaScript -->
+  <script>
+    <!-- INLINE_JS -->
+  </script>
+</body>
+</html>
