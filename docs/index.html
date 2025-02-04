@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>✨MagicPaletteAnalyzer - 画像から色を召喚する魔導具 ver 0.0.2</title>
+  <title>✨MagicPaletteAnalyzer - 画像から色を召喚する魔導具 ver 0.0.3</title>
   <meta name="viewport" content="initial-scale=1.0,width=device-width,viewport-fit=cover">
   <meta name="description"
   content="MagicPaletteAnalyzer - 画像に宿る色の精霊を可視化するカラーパレット生成ツール。瞳の色から風景まで、あらゆる画像を16色の魔方陣へ変換。術師のための色彩錬金術ツール。">
@@ -47,9 +47,9 @@
     <div class="flex items-center justify-between px-4 py-2">
       <div>
         <!-- タイトル -->
-        <h1 class="text-2xl font-bold">MagicPaletteAnalyzer✨🎨🔍️</h1>
+        <h1 class="text-2xl font-bold">MagicPaletteAnalyzer<span class="hidden md:inline">✨🎨🔍</span></h1>
         <!-- バージョン -->
-        <span class="text-sm text-gray-500 dark:text-white-500">ver 0.0.2</span>
+        <span class="text-sm text-gray-500 dark:text-white-500">ver 0.0.3</span>
       </div>
       <div class="flex items-center gap-4">
         <!-- 使用方法（アコーディオン） -->
@@ -73,10 +73,10 @@
         </div>
         <!-- GitHubリンク -->
         <a href="https://github.com/haruharu-1105/MagicPaletteAnalyzer" target="_blank" rel="noopener"
-        class="text-blue-500 hover:underline">GitHub</a>
+        class="hidden md:inline text-blue-500 hover:underline">GitHub</a>
         <!-- テーマ切替ボタン -->
         <button id="theme-toggle" class="p-2 border rounded focus:outline-none">
-          Toggle Theme
+          <span></span><span class="hidden md:inline">モードへ</span>
         </button>
       </div>
     </div>
@@ -84,16 +84,33 @@
   <!-- ページ全体のレイアウト：サイドバーとメインコンテンツ -->
   <div class="flex pt-24">
     <!-- 左側のサイドバー（固定） -->
-    <aside class="fixed left-0 top-32 w-40 h-full shadow dark:text-[#e0e0e0] z-30">
-      <!-- 現在選択色表示 -->
-      <h2 class="text-xl font-bold m-4">現在選択色</h2>
-      <div id="color-info" class="flex flex-col items-center">
-        <div id="color-display" class="w-20 h-20 border border-[#1a1a1a] dark:border-[#e0e0e0] mb-4"></div>
-        <div class="text-sm">
-          <div>HEX: <span id="color-hex">#FFFFFF</span></div>
-          <div>RGB: <span id="color-rgb">255, 255, 255</span></div>
-          <div>HSV: <span id="color-hsv">0, 0, 100</span></div>
+    <aside class="fixed left-0 top-32 w-40 h-full shadow dark:text-[#e0e0e0] z-30 ml-2">
+      <div id="aside-container">
+        <div id="color-info" class="flex flex-col">
+          <!-- 現在選択色表示 -->
+          <h2 class="text-xl font-bold">現在選択色</h2>
+          <div id="color-display" class="ml-4 text-center w-20 h-20 border border-[#1a1a1a] dark:border-[#e0e0e0]"></div>
+          <div class="text-sm">
+            <div>HEX: <span id="color-hex">#FFFFFF</span></div>
+            <div>RGB: <span id="color-rgb">255, 255, 255</span></div>
+            <div>HSV: <span id="color-hsv">0, 0, 100</span></div>
+          </div>
         </div>
+      <!-- カラーヒストリー表示 -->
+      <div id="history" class="border border-gray-300 h-full p-2.5 mt-4">
+        <!-- ヒストリーのタイトルとダウンロードボタンを同じ行に配置 -->
+        <h3 class="text-lg font-semibold px-4">履歴</h3>
+        <div class="flex flex-col">
+          <button id="download-history"
+          class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
+          disabled>
+          画像ダウンロード⬇
+          </button>
+      </div>
+      <hr>
+      <!-- ヒストリーの色ボックスを最大16列で表示 -->
+      <div id="history-colors" class="grid grid-cols-1 gap-2 mt-2 max-h-[712px] overflow-y-auto">
+        <!-- ヒストリーの色ボックスがここに追加されます -->
       </div>
     </aside>
     <!-- メインコンテンツ -->
@@ -120,7 +137,7 @@
           <input type="file" id="file-input" accept="image/*" class="p-2 border border-gray-300 py-2 rounded">
           <button id="paste-button" class="px-16 bg-orange-500 rounded hover:bg-orange-600 text-nowrap h-12">クリップボードから📋
           </button>
-          <div id="drop-area" class="w-full py-2.5 border-b-2 border-gray-400 bg-gray-50 text-center font-bold">
+          <div id="drop-area" class="hidden md:inline w-full py-2.5 border-b-2 border-gray-400 bg-gray-50 text-center font-bold">
             ここに画像をドラッグ＆ドロップ
           </div>
         </div>
@@ -131,22 +148,6 @@
         <h3 class="text-lg font-semibold">🎨画像のパレット</h3>
         <div id="palette-colors" class="grid gap-1 mt-2"
         style="grid-template-columns: repeat(16, 40px); grid-template-rows: repeat(4, 40px);">
-      </div>
-      
-      <!-- カラーヒストリー表示 -->
-      <div id="history" class="border border-gray-300 p-2.5 mt-4">
-        <!-- ヒストリーのタイトルとダウンロードボタンを同じ行に配置 -->
-        <div class="flex items-center">
-          <h3 class="text-lg font-semibold px-4">カラーヒストリー</h3>
-          <button id="download-history"
-          class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
-          disabled>
-          画像ダウンロード⬇
-        </button>
-      </div>
-      <!-- ヒストリーの色ボックスを最大16列で表示 -->
-      <div id="history-colors" class="grid gap-1 mt-2" style="grid-template-columns: repeat(16, 64px);">
-        <!-- ヒストリーの色ボックスがここに追加されます -->
       </div>
       <!-- カラーヒストリーのダウンロードオプション -->
       <div class="mt-4">
@@ -190,7 +191,10 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
 </button>
 </main>
 </div>
-<script>
+  <!-- インライン JavaScript -->
+  <script>
+    // src/color-helper.js
+
   // ------------------------------------------------
   // ColorHelper クラス（色変換・情報取得用のユーティリティクラス）
   // ------------------------------------------------
@@ -297,9 +301,9 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
     static fromRgb(r, g, b) {
       return new ColorHelper({ r, g, b });
     }
-    
   }
-  
+// src/ui.js
+
   // UI 要素の管理オブジェクト
   const uiElements = {
     themeToggleBtn: document.getElementById('theme-toggle'),
@@ -323,14 +327,31 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
     canvasMessage: document.getElementById('canvas-message'),
   };
   
-  const ctx = uiElements.canvas.getContext('2d', {
-    willReadFrequently: true
-  });
+  const ctx = uiElements.canvas.getContext('2d');
   
+  // 最終選択色
   let lastColor = null;
   // 共通のフラグ（ドラッグ中かどうか）
   let isDragging = false;
+  // フラグ変数：次のフレームで処理を実行中かどうかを管理します。
+  let isFrameScheduled = false;
   
+  // スロットリングされたイベントハンドラ
+  function throttledMouseMoveHandler(e) {
+    // 既にフレームがスケジュール済みなら何もしない
+    if (isFrameScheduled){
+      return;
+    }
+
+    isFrameScheduled = true;
+    requestAnimationFrame(() => {
+      // カラー情報のプレビュー
+      updateColorPreview(e);
+
+      // フレーム実行後にフラグをリセット
+      isFrameScheduled = false;
+    });
+  }
   /**
   * 交互開始時のハンドラ（マウス、タッチどちらも）
   * @param {Event} e 
@@ -338,17 +359,17 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
   function onInteractionStart(e) {
     e.preventDefault(); // デフォルト動作の抑制（タッチスクロールなどを防ぐ）
     isDragging = true;
-    updateColorPreview(e); // イベントオブジェクトをそのまま渡す
+    throttledMouseMoveHandler(e);
   }
   
   /**
-  * 移動時のハンドラ（マウス、タッチどちらも）
+  * 移動時のハンドラ（マウス）
   * @param {Event} e 
   */
   function onInteractionMove(e) {
     e.preventDefault();
     if (isDragging) {
-      updateColorPreview(e);
+      throttledMouseMoveHandler(e);
     }
   }
   
@@ -359,7 +380,6 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
   function onInteractionEnd(e) {
     e.preventDefault();
     isDragging = false;
-    uiElements.colorPreview.classList.add('hidden'); // プレビューを非表示にする
   }
   
   // マウスイベントの登録
@@ -369,7 +389,11 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
   
   // タッチイベントの登録
   uiElements.canvas.addEventListener('touchstart', onInteractionStart);
-  uiElements.canvas.addEventListener('touchmove', onInteractionMove);
+  uiElements.canvas.addEventListener('touchmove', (e) => {
+     e.preventDefault();
+     // タッチイベントの場合は最初のタッチ情報を使う
+     throttledMouseMoveHandler(e.touches[0]);
+  });
   uiElements.canvas.addEventListener('touchend', onInteractionEnd);
   
   /**
@@ -396,7 +420,7 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
     };
   }
   
-  // カラー更新処理（アロー関数、分割代入）
+  // カラー更新処理
   const updateColorPreview = (e) => {
     const { x, y } = getCanvasCoordinates(e, uiElements.canvas);
     // オーバーレイ表示を更新
@@ -417,7 +441,6 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
     uiElements.colorPreview.style.left = `${e.clientX - containerRect.left - 40}px`;
     uiElements.colorPreview.style.top = `${e.clientY - containerRect.top - 40}px`;
     uiElements.colorPreview.style.display = 'flex';
-    console.log(hex);
   };
   
   /** ヘルパー関数：16進数から現在色表示を更新する
@@ -439,6 +462,15 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
   function loadImage(file) {
     const reader = new FileReader();
     reader.onload = function (e) {
+      // 古い img の参照を解放
+      if (img) {
+        img.onload = null;   // イベントハンドラを解除
+        if (img.src && img.src.startsWith('blob:')) {
+          URL.revokeObjectURL(img.src);  // Blob URL を解放
+        }
+        img.src = "";         // 画像の参照を解除
+        img = null;           // 参照を完全に切り離す
+      }
       img = new Image();
       img.onload = function () {
         // キャンバスサイズを画像サイズに合わせる
@@ -608,7 +640,7 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
     colorDiv.style.color = isDarkColor(hex) ? "#ffffff" : "#000000";
     colorDiv.title = hex;
     colorDiv.textContent = hex;
-    uiElements.historyContainer.appendChild(colorDiv);
+    uiElements.historyContainer.prepend(colorDiv);
     // ヒストリーに項目が追加されたので、ダウンロードボタンを有効化
     uiElements.downloadHistoryBtn.disabled = uiElements.historyContainer.length > 0;
   }
@@ -774,6 +806,7 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
   uiElements.scrollToTopButton.addEventListener('click', () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
+// src/theme-manager.js
 
   // テーマ管理クラス
   class ThemeManager {
@@ -801,7 +834,7 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
       document.body.classList.toggle('dark', isDark);
       document.body.classList.toggle('bg-gray-900', isDark);
       document.body.classList.toggle('bg-gray-100', !isDark);
-      this.themeToggleBtn.textContent = isDark ? "☀️ライトモードへ" : "🌙ダークモードへ";
+      this.themeToggleBtn.firstChild.textContent = isDark ? "☀ライト" : "🌙ダーク";
       this.themeToggleBtn.classList.toggle('text-white', isDark);
       this.themeToggleBtn.classList.toggle('text-black', !isDark);
       localStorage.setItem('theme', this.currentMode);
@@ -814,11 +847,13 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
       this.applyTheme();
     }
   }
+// src/main.js
 
   // -------------------------------
   // テーマ切替・初期表示処理
   // -------------------------------
   this.themeManager = new ThemeManager();
-</script>
+
+  </script>
 </body>
 </html>

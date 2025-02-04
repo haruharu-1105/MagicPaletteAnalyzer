@@ -363,7 +363,7 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
   }
   
   /**
-  * 移動時のハンドラ（マウス、タッチどちらも）
+  * 移動時のハンドラ（マウス）
   * @param {Event} e 
   */
   function onInteractionMove(e) {
@@ -380,7 +380,6 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
   function onInteractionEnd(e) {
     e.preventDefault();
     isDragging = false;
-    uiElements.colorPreview.classList.add('hidden'); // プレビューを非表示にする
   }
   
   // マウスイベントの登録
