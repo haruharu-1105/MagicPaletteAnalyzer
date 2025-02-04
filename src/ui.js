@@ -292,7 +292,7 @@
   
   // マウス移動時にカーソル下の色を取得して表示
   uiElements.canvas.addEventListener('mousemove', (e) => {
-    const { x, y } = getCanvasCoordinates(event, uiElements.canvas);
+    const { x, y } = getCanvasCoordinates(e, uiElements.canvas);
     const pixel = ctx.getImageData(x, y, 1, 1).data;
     const [r, g, b, a] = pixel;
     if (a === 0) return;  // 透明な場合は無視
@@ -302,7 +302,7 @@
   
   // クリック時に現在のカーソル色をカラーヒストリーに追加
   uiElements.canvas.addEventListener('click', (e) => {
-    const { x, y } = getCanvasCoordinates(event, uiElements.canvas);
+    const { x, y } = getCanvasCoordinates(e, uiElements.canvas);
     const pixel = ctx.getImageData(x, y, 1, 1).data;
     const [r, g, b, a] = pixel;
     if (a === 0) return;
