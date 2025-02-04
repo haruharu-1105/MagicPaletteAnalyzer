@@ -12,6 +12,7 @@
     historyContainer: document.getElementById('history-colors'), // カラーヒストリー表示エリア
     errorMessage: document.getElementById('error-message'),// エラーメッセージ表示エリア
     currentColorDisplay: document.getElementById('color-display'),// 現在選択色表示
+    colorName: document.getElementById('color-name'),// 名前 表示
     colorHex: document.getElementById('color-hex'),// HEX 表示
     colorRgb: document.getElementById('color-rgb'),// RGB 表示
     colorHsv: document.getElementById('color-hsv'),// HSV 表示
@@ -145,6 +146,13 @@
   function updateCurrentColor(hex) {
     uiElements.currentColorDisplay.style.background = hex;
     uiElements.colorHex.textContent = hex;
+    const currentColorName = NamedColor.findByHex(hex);
+    if (currentColorName === null) {
+      uiElements.colorName.textContent = "-";
+    } else {
+      uiElements.colorName.textContent = currentColorName;
+    }
+    
     const currentColor = new ColorHelper(hex);
     const [r, g, b] = currentColor.toRGB();
     uiElements.colorRgb.textContent = `${r}, ${g}, ${b}`;
