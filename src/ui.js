@@ -287,7 +287,7 @@
       uiElements.paletteContainer.appendChild(colorDiv);
     });
     
-    uiElements.downloadPaletteBtn.disabled = uiElements.paletteContainer.length > 0;
+    uiElements.downloadPaletteBtn.disabled = uiElements.paletteContainer.children.length === 0;
   }
   
   // マウス移動時にカーソル下の色を取得して表示
@@ -338,7 +338,7 @@
     colorDiv.textContent = hex;
     uiElements.historyContainer.prepend(colorDiv);
     // ヒストリーに項目が追加されたので、ダウンロードボタンを有効化
-    uiElements.downloadHistoryBtn.disabled = uiElements.historyContainer.length > 0;
+    uiElements.downloadHistoryBtn.disabled = uiElements.historyContainer.children.length === 0;
   }
   
     /**
