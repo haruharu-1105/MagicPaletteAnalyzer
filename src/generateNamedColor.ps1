@@ -78,6 +78,34 @@ $( $jsArray -join ",`n" )
      }
      return null;
     }
+
+    static findClosestHex(hex) {
+        const rgb = NamedColors.hexToRgb(hex);
+        if (!rgb) return null;
+        let closestColor = null;
+        let minDistance = Infinity;
+        for (const [name, color] of Object.entries(NamedColors.COLORS)) {
+            const distance = Math.sqrt(
+                Math.pow(rgb[0] - color.rgb[0], 2) +
+                Math.pow(rgb[1] - color.rgb[1], 2) +
+                Math.pow(rgb[2] - color.rgb[2], 2)
+            );
+            if (distance < minDistance) {
+                minDistance = distance;
+                closestColor = name;
+            }
+        }
+        return closestColor;
+    }
+
+    static hexToRgb(hex) {
+        hex = hex.replace(/^#/, '');
+        if (hex.length === 3) {
+            hex = hex.split('').map(c => c + c).join('');
+        }
+        const bigint = parseInt(hex, 16);
+        return [(bigint >> 16) & 255, (bigint >> 8) & 255, bigint & 255];
+    }
 }
 
 "@

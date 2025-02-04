@@ -92,6 +92,7 @@
           <div id="color-display" class="ml-4 text-center w-20 h-20 border border-[#1a1a1a] dark:border-[#e0e0e0]"></div>
           <div class="text-sm">
             <div>NAME: <span id="color-name">-</span></div>
+            <div>CLOSEST: <span id="color-closest-name">-</span></div>            
             <div>HEX: <span id="color-hex">#FFFFFF</span></div>
             <div>RGB: <span id="color-rgb">255, 255, 255</span></div>
             <div>HSV: <span id="color-hsv">0, 0, 100</span></div>
@@ -318,6 +319,7 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
     errorMessage: document.getElementById('error-message'),// エラーメッセージ表示エリア
     currentColorDisplay: document.getElementById('color-display'),// 現在選択色表示
     colorName: document.getElementById('color-name'),// 名前 表示
+    colorClosestName: document.getElementById('color-closest-name'),// 近い名前 表示    
     colorHex: document.getElementById('color-hex'),// HEX 表示
     colorRgb: document.getElementById('color-rgb'),// RGB 表示
     colorHsv: document.getElementById('color-hsv'),// HSV 表示
@@ -326,8 +328,14 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
     scrollToTopButton: document.getElementById('scroll-to-top'), // 一番上にスクロールボタン
     downloadPaletteBtn: document.getElementById('download-palette'),// パレットダウンロードボタン
     downloadHistoryBtn: document.getElementById('download-history'),// ヒストリーダウンロードボタン
-    canvasMessage: document.getElementById('canvas-message'),
   };
+  
+  // 各UI要素がnullでないかをチェック
+  Object.entries(uiElements).forEach(([key, element]) => {
+    if (element === null) {
+      throw new Error(`UI element with id '${key}' is missing from the document.`);
+    }
+  });
   
   const ctx = uiElements.canvas.getContext('2d');
   
@@ -456,6 +464,13 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
       uiElements.colorName.textContent = "-";
     } else {
       uiElements.colorName.textContent = currentColorName;
+    }
+
+    const currentColorClosestName = NamedColor.findClosestHex(hex);
+    if (currentColorClosestName === null) {
+      uiElements.colorClosestName.textContent = "-";
+    } else {
+      uiElements.colorClosestName.textContent = currentColorClosestName;
     }
     
     const currentColor = new ColorHelper(hex);
@@ -1016,6 +1031,34 @@ class NamedColor {
          }
      }
      return null;
+    }
+
+    static findClosestHex(hex) {
+        const rgb = NamedColor.hexToRgb(hex);
+        if (!rgb) return null;
+        let closestColor = null;
+        let minDistance = Infinity;
+        for (const [name, color] of Object.entries(NamedColor.COLORS)) {
+            const distance = Math.sqrt(
+                Math.pow(rgb[0] - color.rgb[0], 2) +
+                Math.pow(rgb[1] - color.rgb[1], 2) +
+                Math.pow(rgb[2] - color.rgb[2], 2)
+            );
+            if (distance < minDistance) {
+                minDistance = distance;
+                closestColor = name;
+            }
+        }
+        return closestColor;
+    }
+
+    static hexToRgb(hex) {
+        hex = hex.replace(/^#/, '');
+        if (hex.length === 3) {
+            hex = hex.split('').map(c => c + c).join('');
+        }
+        const bigint = parseInt(hex, 16);
+        return [(bigint >> 16) & 255, (bigint >> 8) & 255, bigint & 255];
     }
 }
 // src/main.js

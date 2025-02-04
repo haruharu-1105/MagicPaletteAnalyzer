@@ -13,6 +13,7 @@
     errorMessage: document.getElementById('error-message'),// エラーメッセージ表示エリア
     currentColorDisplay: document.getElementById('color-display'),// 現在選択色表示
     colorName: document.getElementById('color-name'),// 名前 表示
+    colorClosestName: document.getElementById('color-closest-name'),// 近い名前 表示    
     colorHex: document.getElementById('color-hex'),// HEX 表示
     colorRgb: document.getElementById('color-rgb'),// RGB 表示
     colorHsv: document.getElementById('color-hsv'),// HSV 表示
@@ -21,8 +22,14 @@
     scrollToTopButton: document.getElementById('scroll-to-top'), // 一番上にスクロールボタン
     downloadPaletteBtn: document.getElementById('download-palette'),// パレットダウンロードボタン
     downloadHistoryBtn: document.getElementById('download-history'),// ヒストリーダウンロードボタン
-    canvasMessage: document.getElementById('canvas-message'),
   };
+  
+  // 各UI要素がnullでないかをチェック
+  Object.entries(uiElements).forEach(([key, element]) => {
+    if (element === null) {
+      throw new Error(`UI element with id '${key}' is missing from the document.`);
+    }
+  });
   
   const ctx = uiElements.canvas.getContext('2d');
   
@@ -151,6 +158,13 @@
       uiElements.colorName.textContent = "-";
     } else {
       uiElements.colorName.textContent = currentColorName;
+    }
+
+    const currentColorClosestName = NamedColor.findClosestHex(hex);
+    if (currentColorClosestName === null) {
+      uiElements.colorClosestName.textContent = "-";
+    } else {
+      uiElements.colorClosestName.textContent = currentColorClosestName;
     }
     
     const currentColor = new ColorHelper(hex);
