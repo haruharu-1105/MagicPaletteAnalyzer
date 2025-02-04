@@ -153,13 +153,14 @@
   function updateCurrentColor(hex) {
     uiElements.currentColorDisplay.style.background = hex;
     uiElements.colorHex.textContent = hex;
+    
     const currentColorName = NamedColor.findByHex(hex);
     if (currentColorName === null) {
       uiElements.colorName.textContent = "-";
     } else {
       uiElements.colorName.textContent = currentColorName;
     }
-
+    
     const currentColorClosestName = NamedColor.findClosestHex(hex);
     if (currentColorClosestName === null) {
       uiElements.colorClosestName.textContent = "-";
@@ -172,6 +173,7 @@
     uiElements.colorRgb.textContent = `${r}, ${g}, ${b}`;
     const [h, s, v] = currentColor.toHsv();
     uiElements.colorHsv.textContent = `${h}, ${s}, ${v}`;
+    //console.log(hex);
   }
   
   let img = new Image();

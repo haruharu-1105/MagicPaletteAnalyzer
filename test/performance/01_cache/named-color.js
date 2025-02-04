@@ -181,7 +181,15 @@ class NamedColor {
      }
      return null;
     }
+    /**
+     * キャッシュヒットの回数（分析用）
+     */
+    static cacheHits = 0;
 
+    /**
+     * キャッシュミスの回数（分析用）
+     */
+    static cacheMisses = 0;
     /**
      * 指定された HEX 値に最も近い色の名前を返します。
      * 色の近さは、RGB 各成分のユークリッド距離に基づいて計算されます。
@@ -191,6 +199,20 @@ class NamedColor {
      * @returns {string|null} - 最も近い色の名前、もしくは null。
      */
     static findClosestHex(hex) {
+        // キャッシュに結果が存在する場合は、取得後に「最近使った」状態にするため再設定します
+        if (NamedColor.closestColorCache.has(hex)) {
+            const cachedResult = NamedColor.closestColorCache.get(hex);
+            NamedColor.cacheHits++;
+
+            // LRU のため、利用したエントリを最新に更新
+            NamedColor.closestColorCache.delete(hex);
+            NamedColor.closestColorCache.set(hex, cachedResult);
+            return cachedResult;
+        }
+        
+        // キャッシュミスの場合
+        NamedColor.cacheMisses++;
+        
         const rgb = NamedColor.hexToRgb(hex);
         if (!rgb) return null;
         let closestColor = null;
@@ -207,6 +229,14 @@ class NamedColor {
             }
         }
         
+        // キャッシュのサイズが上限に達している場合、最も古いエントリを削除
+        if (NamedColor.closestColorCache.size >= NamedColor.cacheLimit) {
+            const firstKey = NamedColor.closestColorCache.keys().next().value;
+            NamedColor.closestColorCache.delete(firstKey);
+        }
+        // 新しい結果をキャッシュに保存
+        NamedColor.closestColorCache.set(hex, closestColor);
+
         return closestColor;
     }
     /**

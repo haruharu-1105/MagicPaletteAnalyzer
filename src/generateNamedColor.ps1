@@ -65,10 +65,32 @@ foreach ($key in $colorDict.Keys) {
 $jsContent = @"
 // src/named-color.js
 
+/**
+ * NamedColor クラスは、名前付きの色に関する情報とユーティリティ関数を提供します。
+ * 主な機能として、HEX 値から色名の検索、最も近い色の探索、HEX 値の RGB 変換などを行います。
+ */
 class NamedColor {
+    /**
+     * 定義済みの名前付き色の一覧。
+     * 各キーは色名を表し、対応する値は HEX 表記と RGB 配列を持つオブジェクトです。
+     */
     static COLORS = {
 $( $jsArray -join ",`n" )
     };
+    // HEX 値から最も近い色名の結果をキャッシュする Map
+    // Map は挿入順を保持するので、最初の要素が最も古く使われたものとなります
+    static closestColorCache = new Map();
+    
+    // キャッシュの最大項目数を定義
+    static cacheLimit = 100;
+    
+    /**
+     * 指定された HEX 値に完全一致する色名を返します。
+     * 一致しない場合は null を返します。
+     *
+     * @param {string} hex - 検索対象の HEX カラーコード（例: "#FF0000"）。
+     * @returns {string|null} - 見つかった色名、もしくは null。
+     */
     static findByHex(hex) {
       hex = hex.toLowerCase();
       for (const [name, color] of Object.entries(NamedColor.COLORS)) {
@@ -79,12 +101,20 @@ $( $jsArray -join ",`n" )
      return null;
     }
 
+    /**
+     * 指定された HEX 値に最も近い色の名前を返します。
+     * 色の近さは、RGB 各成分のユークリッド距離に基づいて計算されます。
+     * 入力 HEX 値が不正な場合は null を返します。
+     *
+     * @param {string} hex - 探索対象の HEX カラーコード（例: "#3f627e"）。
+     * @returns {string|null} - 最も近い色の名前、もしくは null。
+     */
     static findClosestHex(hex) {
-        const rgb = NamedColors.hexToRgb(hex);
+        const rgb = NamedColor.hexToRgb(hex);
         if (!rgb) return null;
         let closestColor = null;
         let minDistance = Infinity;
-        for (const [name, color] of Object.entries(NamedColors.COLORS)) {
+        for (const [name, color] of Object.entries(NamedColor.COLORS)) {
             const distance = Math.sqrt(
                 Math.pow(rgb[0] - color.rgb[0], 2) +
                 Math.pow(rgb[1] - color.rgb[1], 2) +
@@ -95,9 +125,16 @@ $( $jsArray -join ",`n" )
                 closestColor = name;
             }
         }
+        
         return closestColor;
     }
-
+    /**
+     * HEX カラーコードを RGB 配列に変換します。
+     * 3桁の省略形もサポートします。
+     *
+     * @param {string} hex - 変換対象の HEX カラーコード（例: "#fff" や "#ffffff"）。
+     * @returns {number[]} - 変換された RGB 値の配列（例: [255, 255, 255]）。
+     */
     static hexToRgb(hex) {
         hex = hex.replace(/^#/, '');
         if (hex.length === 3) {
