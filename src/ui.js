@@ -59,7 +59,7 @@
   }
   
   /**
-  * 移動時のハンドラ（マウス、タッチどちらも）
+  * 移動時のハンドラ（マウス）
   * @param {Event} e 
   */
   function onInteractionMove(e) {
@@ -76,7 +76,6 @@
   function onInteractionEnd(e) {
     e.preventDefault();
     isDragging = false;
-    uiElements.colorPreview.classList.add('hidden'); // プレビューを非表示にする
   }
   
   // マウスイベントの登録
