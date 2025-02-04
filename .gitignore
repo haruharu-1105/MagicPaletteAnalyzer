@@ -1,7 +1,7 @@
 #  Ignore file extensions
-# log file
+# Log file
 *.log
-# shortcut file
+# Shortcut file
 *.lnk
-# win merge backup file
+# WinMerge backup file
 *.bak

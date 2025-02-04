@@ -23,14 +23,31 @@
     canvasMessage: document.getElementById('canvas-message'),
   };
   
-  const ctx = uiElements.canvas.getContext('2d', {
-    willReadFrequently: true
-  });
+  const ctx = uiElements.canvas.getContext('2d');
   
+  // 最終選択色
   let lastColor = null;
   // 共通のフラグ（ドラッグ中かどうか）
   let isDragging = false;
+  // フラグ変数：次のフレームで処理を実行中かどうかを管理します。
+  let isFrameScheduled = false;
   
+  // スロットリングされたイベントハンドラ
+  function throttledMouseMoveHandler(e) {
+    // 既にフレームがスケジュール済みなら何もしない
+    if (isFrameScheduled){
+      return;
+    }
+
+    isFrameScheduled = true;
+    requestAnimationFrame(() => {
+      // カラー情報のプレビュー
+      updateColorPreview(e);
+
+      // フレーム実行後にフラグをリセット
+      isFrameScheduled = false;
+    });
+  }
   /**
   * 交互開始時のハンドラ（マウス、タッチどちらも）
   * @param {Event} e 
@@ -38,7 +55,7 @@
   function onInteractionStart(e) {
     e.preventDefault(); // デフォルト動作の抑制（タッチスクロールなどを防ぐ）
     isDragging = true;
-    updateColorPreview(e); // イベントオブジェクトをそのまま渡す
+    throttledMouseMoveHandler(e);
   }
   
   /**
@@ -48,7 +65,7 @@
   function onInteractionMove(e) {
     e.preventDefault();
     if (isDragging) {
-      updateColorPreview(e);
+      throttledMouseMoveHandler(e);
     }
   }
   
@@ -69,7 +86,11 @@
   
   // タッチイベントの登録
   uiElements.canvas.addEventListener('touchstart', onInteractionStart);
-  uiElements.canvas.addEventListener('touchmove', onInteractionMove);
+  uiElements.canvas.addEventListener('touchmove', (e) => {
+     e.preventDefault();
+     // タッチイベントの場合は最初のタッチ情報を使う
+     throttledMouseMoveHandler(e.touches[0]);
+  });
   uiElements.canvas.addEventListener('touchend', onInteractionEnd);
   
   /**
@@ -96,7 +117,7 @@
     };
   }
   
-  // カラー更新処理（アロー関数、分割代入）
+  // カラー更新処理
   const updateColorPreview = (e) => {
     const { x, y } = getCanvasCoordinates(e, uiElements.canvas);
     // オーバーレイ表示を更新
@@ -117,7 +138,6 @@
     uiElements.colorPreview.style.left = `${e.clientX - containerRect.left - 40}px`;
     uiElements.colorPreview.style.top = `${e.clientY - containerRect.top - 40}px`;
     uiElements.colorPreview.style.display = 'flex';
-    console.log(hex);
   };
   
   /** ヘルパー関数：16進数から現在色表示を更新する
