@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>✨MagicPaletteAnalyzer - 画像から色を召喚する魔導具 ver 0.0.3</title>
+  <title>✨MagicPaletteAnalyzer - 画像から色を召喚する魔導具 ver 0.0.4</title>
   <meta name="viewport" content="initial-scale=1.0,width=device-width,viewport-fit=cover">
   <meta name="description"
   content="MagicPaletteAnalyzer - 画像に宿る色の精霊を可視化するカラーパレット生成ツール。瞳の色から風景まで、あらゆる画像を16色の魔方陣へ変換。術師のための色彩錬金術ツール。">
@@ -49,7 +49,7 @@
         <!-- タイトル -->
         <h1 class="text-2xl font-bold">MagicPaletteAnalyzer<span class="hidden md:inline">✨🎨🔍</span></h1>
         <!-- バージョン -->
-        <span class="text-sm text-gray-500 dark:text-white-500">ver 0.0.3</span>
+        <span class="text-sm text-gray-500 dark:text-white-500">ver 0.0.4</span>
       </div>
       <div class="flex items-center gap-4">
         <!-- 使用方法（アコーディオン） -->
@@ -91,6 +91,8 @@
           <h2 class="text-xl font-bold">現在選択色</h2>
           <div id="color-display" class="ml-4 text-center w-20 h-20 border border-[#1a1a1a] dark:border-[#e0e0e0]"></div>
           <div class="text-sm">
+            <div>NAME: <span id="color-name">-</span></div>
+            <div>CLOSEST: <span id="color-closest-name">-</span></div>            
             <div>HEX: <span id="color-hex">#FFFFFF</span></div>
             <div>RGB: <span id="color-rgb">255, 255, 255</span></div>
             <div>HSV: <span id="color-hsv">0, 0, 100</span></div>
@@ -149,20 +151,7 @@
         <div id="palette-colors" class="grid gap-1 mt-2"
         style="grid-template-columns: repeat(16, 40px); grid-template-rows: repeat(4, 40px);">
       </div>
-      <!-- カラーヒストリーのダウンロードオプション -->
-      <div class="mt-4">
-        <h3 class="text-lg font-semibold">ヒストリーのダウンロードオプション</h3>
-        <div>
-          <input type="radio" id="history-include-image" name="history-download-option" value="include" class="mr-2" checked>
-          <label for="history-include-image">元画像の下にヒストリー情報を追加してダウンロードする</label>
-        </div>
-        <div>
-          <input type="radio" id="history-only" name="history-download-option" value="history-only" class="mr-2">
-          <label for="history-only">ヒストリー情報のみダウンロードする</label>
-        </div>
-      </div>
-    </div>
-    <!-- ダウンロードオプション -->
+          <!-- ダウンロードオプション -->
     <div class="mt-4">
       <h3 class="text-lg font-semibold">パレットのダウンロードオプション</h3>
       <div>
@@ -179,6 +168,20 @@
       パレットダウンロード⬇
     </button>
   </div>
+      <!-- カラーヒストリーのダウンロードオプション -->
+      <div class="mt-4">
+        <h3 class="text-lg font-semibold">ヒストリーのダウンロードオプション</h3>
+        <div>
+          <input type="radio" id="history-include-image" name="history-download-option" value="include" class="mr-2" checked>
+          <label for="history-include-image">元画像の下にヒストリー情報を追加してダウンロードする</label>
+        </div>
+        <div>
+          <input type="radio" id="history-only" name="history-download-option" value="history-only" class="mr-2">
+          <label for="history-only">ヒストリー情報のみダウンロードする</label>
+        </div>
+      </div>
+    </div>
+
   <!-- エラーメッセージ -->
   <div id="error-message"
   class="fixed bottom-0 left-0 w-full bg-[#e0e0e0] p-2.5 text-center text-red-500 border-t border-gray-300 z-50">

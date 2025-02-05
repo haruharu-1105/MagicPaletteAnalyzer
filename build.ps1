@@ -13,6 +13,7 @@ $jsFiles = @(
     "src/color-helper.js",
     "src/ui.js",
     "src/theme-manager.js",
+    "src/named-color.js",
     "src/main.js"
 )
 

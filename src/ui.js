@@ -12,6 +12,8 @@
     historyContainer: document.getElementById('history-colors'), // カラーヒストリー表示エリア
     errorMessage: document.getElementById('error-message'),// エラーメッセージ表示エリア
     currentColorDisplay: document.getElementById('color-display'),// 現在選択色表示
+    colorName: document.getElementById('color-name'),// 名前 表示
+    colorClosestName: document.getElementById('color-closest-name'),// 近い名前 表示    
     colorHex: document.getElementById('color-hex'),// HEX 表示
     colorRgb: document.getElementById('color-rgb'),// RGB 表示
     colorHsv: document.getElementById('color-hsv'),// HSV 表示
@@ -20,8 +22,14 @@
     scrollToTopButton: document.getElementById('scroll-to-top'), // 一番上にスクロールボタン
     downloadPaletteBtn: document.getElementById('download-palette'),// パレットダウンロードボタン
     downloadHistoryBtn: document.getElementById('download-history'),// ヒストリーダウンロードボタン
-    canvasMessage: document.getElementById('canvas-message'),
   };
+  
+  // 各UI要素がnullでないかをチェック
+  Object.entries(uiElements).forEach(([key, element]) => {
+    if (element === null) {
+      throw new Error(`UI element with id '${key}' is missing from the document.`);
+    }
+  });
   
   const ctx = uiElements.canvas.getContext('2d');
   
@@ -145,11 +153,27 @@
   function updateCurrentColor(hex) {
     uiElements.currentColorDisplay.style.background = hex;
     uiElements.colorHex.textContent = hex;
+    
+    const currentColorName = NamedColor.findByHex(hex);
+    if (currentColorName === null) {
+      uiElements.colorName.textContent = "-";
+    } else {
+      uiElements.colorName.textContent = currentColorName;
+    }
+    
+    const currentColorClosestName = NamedColor.findClosestHex(hex);
+    if (currentColorClosestName === null) {
+      uiElements.colorClosestName.textContent = "-";
+    } else {
+      uiElements.colorClosestName.textContent = currentColorClosestName;
+    }
+    
     const currentColor = new ColorHelper(hex);
     const [r, g, b] = currentColor.toRGB();
     uiElements.colorRgb.textContent = `${r}, ${g}, ${b}`;
     const [h, s, v] = currentColor.toHsv();
     uiElements.colorHsv.textContent = `${h}, ${s}, ${v}`;
+    //console.log(hex);
   }
   
   let img = new Image();
@@ -287,12 +311,12 @@
       uiElements.paletteContainer.appendChild(colorDiv);
     });
     
-    uiElements.downloadPaletteBtn.disabled = uiElements.paletteContainer.length > 0;
+    uiElements.downloadPaletteBtn.disabled = uiElements.paletteContainer.children.length === 0;
   }
   
   // マウス移動時にカーソル下の色を取得して表示
   uiElements.canvas.addEventListener('mousemove', (e) => {
-    const { x, y } = getCanvasCoordinates(event, uiElements.canvas);
+    const { x, y } = getCanvasCoordinates(e, uiElements.canvas);
     const pixel = ctx.getImageData(x, y, 1, 1).data;
     const [r, g, b, a] = pixel;
     if (a === 0) return;  // 透明な場合は無視
@@ -302,7 +326,7 @@
   
   // クリック時に現在のカーソル色をカラーヒストリーに追加
   uiElements.canvas.addEventListener('click', (e) => {
-    const { x, y } = getCanvasCoordinates(event, uiElements.canvas);
+    const { x, y } = getCanvasCoordinates(e, uiElements.canvas);
     const pixel = ctx.getImageData(x, y, 1, 1).data;
     const [r, g, b, a] = pixel;
     if (a === 0) return;
@@ -338,7 +362,7 @@
     colorDiv.textContent = hex;
     uiElements.historyContainer.prepend(colorDiv);
     // ヒストリーに項目が追加されたので、ダウンロードボタンを有効化
-    uiElements.downloadHistoryBtn.disabled = uiElements.historyContainer.length > 0;
+    uiElements.downloadHistoryBtn.disabled = uiElements.historyContainer.children.length === 0;
   }
   
     /**
