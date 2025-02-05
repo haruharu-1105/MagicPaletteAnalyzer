@@ -151,20 +151,7 @@
         <div id="palette-colors" class="grid gap-1 mt-2"
         style="grid-template-columns: repeat(16, 40px); grid-template-rows: repeat(4, 40px);">
       </div>
-      <!-- カラーヒストリーのダウンロードオプション -->
-      <div class="mt-4">
-        <h3 class="text-lg font-semibold">ヒストリーのダウンロードオプション</h3>
-        <div>
-          <input type="radio" id="history-include-image" name="history-download-option" value="include" class="mr-2" checked>
-          <label for="history-include-image">元画像の下にヒストリー情報を追加してダウンロードする</label>
-        </div>
-        <div>
-          <input type="radio" id="history-only" name="history-download-option" value="history-only" class="mr-2">
-          <label for="history-only">ヒストリー情報のみダウンロードする</label>
-        </div>
-      </div>
-    </div>
-    <!-- ダウンロードオプション -->
+          <!-- ダウンロードオプション -->
     <div class="mt-4">
       <h3 class="text-lg font-semibold">パレットのダウンロードオプション</h3>
       <div>
@@ -181,6 +168,20 @@
       パレットダウンロード⬇
     </button>
   </div>
+      <!-- カラーヒストリーのダウンロードオプション -->
+      <div class="mt-4">
+        <h3 class="text-lg font-semibold">ヒストリーのダウンロードオプション</h3>
+        <div>
+          <input type="radio" id="history-include-image" name="history-download-option" value="include" class="mr-2" checked>
+          <label for="history-include-image">元画像の下にヒストリー情報を追加してダウンロードする</label>
+        </div>
+        <div>
+          <input type="radio" id="history-only" name="history-download-option" value="history-only" class="mr-2">
+          <label for="history-only">ヒストリー情報のみダウンロードする</label>
+        </div>
+      </div>
+    </div>
+
   <!-- エラーメッセージ -->
   <div id="error-message"
   class="fixed bottom-0 left-0 w-full bg-[#e0e0e0] p-2.5 text-center text-red-500 border-t border-gray-300 z-50">
