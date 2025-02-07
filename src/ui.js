@@ -363,80 +363,35 @@
     uiElements.historyContainer.prepend(colorDiv);
     // ヒストリーに項目が追加されたので、ダウンロードボタンを有効化
     uiElements.downloadHistoryBtn.disabled = uiElements.historyContainer.children.length === 0;
-  }
-  
-    /**
-    * 指定のコンテナ内の各カラーボックスをキャンバスに描画する共通関数
-    * @param {CanvasRenderingContext2D} ctx - 描画先のキャンバスコンテキスト
-    * @param {HTMLElement} container - カラーボックスが含まれるコンテナ（例：historyContainer や paletteContainer）
-    * @param {number} itemSize - 各色ボックスのサイズ（ピクセル）
-    * @param {number} columns - 1行あたりのボックス数
-    * @param {number} offsetY - キャンバス上に描画する際の縦方向のオフセット
-    */
-    function drawColorBoxes(ctx, container, itemSize, columns, offsetY) {
-      const items = container.querySelectorAll('.color-box');
-      items.forEach((item, index) => {
-        const col = index % columns;
-        const row = Math.floor(index / columns);
-        // title 属性に hex が入っている前提（もしくは style.backgroundColor）
-        const hex = item.title || item.style.backgroundColor;
-        ctx.fillStyle = hex;
-        ctx.fillRect(col * itemSize, offsetY + row * itemSize, itemSize, itemSize);
-        // 境界線の描画
-        ctx.strokeStyle = "#000";
-        ctx.strokeRect(col * itemSize, offsetY + row * itemSize, itemSize, itemSize);
-      });
-    }
+  }  
   
   // ヒストリー画像ダウンロード処理
   uiElements.downloadHistoryBtn.addEventListener('click', () => {
     // ヒストリー内の色ボックスをまとめたキャンバスを作成
-    const historyItems = uiElements.historyContainer.querySelectorAll('.color-box');
-    if (historyItems.length === 0) {
+    const colorDivs = uiElements.historyContainer.querySelectorAll('.color-box');
+    if (colorDivs.length === 0) {
       alert("ヒストリーに色がありません。");
       return;
     }
+    const downloadCanvas = document.createElement('canvas');
+    const downloadCtx = downloadCanvas.getContext('2d');
     // 選択されたオプションを取得
     const selectedOption = document.querySelector('input[name="history-download-option"]:checked').value;
-    if (selectedOption === "include") {
-      // 元画像付きでダウンロード
-      const downloadCanvas = document.createElement('canvas');
-      // キャンバスの高さは元画像とヒストリー領域の高さを合わせる
-      downloadCanvas.width = uiElements.canvas.width;
-      downloadCanvas.height = uiElements.canvas.height + uiElements.historyContainer.offsetHeight + 20;
-      const downloadCtx = downloadCanvas.getContext('2d');
+    const includeImage = selectedOption === "include";
+    const { width, height } = calculateCanvasSize(colorDivs.length, includeImage);
+    downloadCanvas.width = width;
+    downloadCanvas.height = height;
+    if (includeImage) {
+      // 元画像の下にカラーパレット情報を追加してダウンロード
+      downloadCtx.drawImage(img, 0, 0); // 元画像をキャンバスに描画
       
-      // 元画像を描画
-      downloadCtx.drawImage(img, 0, 0);
-      
-      // ヒストリーの色ボックスを元画像の下に描画
-      const itemSize = 40;  // 各色ボックスのサイズ
-      let yOffset = uiElements.canvas.height + 10;
-      historyItems.forEach((item, index) => {
-        const col = index % 10;
-        const row = Math.floor(index / 10);
-        downloadCtx.fillStyle = item.title;  // title 属性に hex 値を設定している
-        downloadCtx.fillRect(col * itemSize, yOffset + row * itemSize, itemSize, itemSize);
-        // 境界線描画
-        downloadCtx.strokeStyle = "#000";
-        downloadCtx.strokeRect(col * itemSize, yOffset + row * itemSize, itemSize, itemSize);
-      });
+      const yOffset = uiElements.canvas.height + 10;
+      drawColorBoxes(downloadCtx, colorDivs, yOffset);
       
       triggerDownload(downloadCanvas, "color_history_with_image_");
     } else {
       // ヒストリー情報のみでダウンロード
-      const downloadCanvas = document.createElement('canvas');
-      downloadCanvas.width = uiElements.historyContainer.offsetWidth;
-      downloadCanvas.height = uiElements.historyContainer.offsetHeight;
-      const downloadCtx = downloadCanvas.getContext('2d');
-      
-      const itemSize = 40;
-      historyItems.forEach((item, index) => {
-        const col = index % 10;
-        const row = Math.floor(index / 10);
-        downloadCtx.fillStyle = item.title;
-        downloadCtx.fillRect(col * itemSize, row * itemSize, itemSize, itemSize);
-      });
+      drawColorBoxes(downloadCtx, colorDivs);
       
       triggerDownload(downloadCanvas, "color_history_only_");
     }
@@ -445,45 +400,52 @@
     // パレットダウンロード処理
   uiElements.downloadPaletteBtn.addEventListener('click', () => {
     const selectedOption = document.querySelector('input[name="download-option"]:checked').value;
+    const colorDivs = uiElements.paletteContainer.querySelectorAll('.color-box');
+    const downloadCanvas = document.createElement('canvas');
+    const downloadCtx = downloadCanvas.getContext('2d');
     
-    if (selectedOption === "include") {
+    const includeImage = selectedOption === "include";
+    const { width, height } = calculateCanvasSize(colorDivs.length, includeImage);
+    downloadCanvas.width = width;
+    downloadCanvas.height = height;
+    if (includeImage) {
       // 元画像の下にカラーパレット情報を追加してダウンロード
-      const downloadCanvas = document.createElement('canvas');
-      downloadCanvas.width = uiElements.canvas.width;
-      downloadCanvas.height = uiElements.canvas.height + uiElements.paletteContainer.offsetHeight + 20;
-      const downloadCtx = downloadCanvas.getContext('2d');
+      downloadCtx.drawImage(img, 0, 0); // 元画像をキャンバスに描画
       
-      // 元画像をキャンバスに描画
-      downloadCtx.drawImage(img, 0, 0);
-      
-      // カラーパレット情報を描画
-      let yOffset = uiElements.canvas.height + 10;
-      const colorDivs = uiElements.paletteContainer.querySelectorAll('.color-box');
-      colorDivs.forEach((colorDiv, index) => {
-        const hex = colorDiv.style.backgroundColor;
-        downloadCtx.fillStyle = hex;
-        downloadCtx.fillRect(index % 16 * 40, yOffset + Math.floor(index / 16) * 40, 40, 40);
-      });
+      const yOffset = uiElements.canvas.height + 10;
+      drawColorBoxes(downloadCtx, colorDivs, yOffset);
       
       triggerDownload(downloadCanvas, "image_with_palette_");
     } else {
       // カラーパレット情報のみダウンロード
-      const downloadCanvas = document.createElement('canvas');
-      downloadCanvas.width = uiElements.paletteContainer.offsetWidth;
-      downloadCanvas.height = uiElements.paletteContainer.offsetHeight;
-      const downloadCtx = downloadCanvas.getContext('2d');
-      
-      // カラーパレット情報を描画
-      const colorDivs = uiElements.paletteContainer.querySelectorAll('.color-box');
-      colorDivs.forEach((colorDiv, index) => {
-        const hex = colorDiv.style.backgroundColor;
-        downloadCtx.fillStyle = hex;
-        downloadCtx.fillRect(index % 16 * 40, Math.floor(index / 16) * 40, 40, 40);
-      });
+      drawColorBoxes(downloadCtx, colorDivs);
       
       triggerDownload(downloadCanvas, "palette_only_");
     }
   });
+  const maxCols = 16; // 最大16列
+  const itemSize = 40; // 各ボックスのサイズ
+
+  // キャンバスサイズを事前計算する関数
+  const calculateCanvasSize = (totalItems, includeImage) => {
+    const numCols = Math.min(totalItems, maxCols); // 最大16列
+    const numRows = Math.ceil(totalItems / maxCols); // 必要な行数
+    
+    const width = numCols * itemSize;
+    const height = numRows * itemSize;
+    
+    return {
+      width: includeImage ? Math.max(uiElements.canvas.width, width) : width, // キャンバスサイズよりパレット数が多い場合は計算値を使用
+      height: includeImage ? uiElements.canvas.height + height + 20 : height
+    };
+  };
+
+  const drawColorBoxes = (ctx, colorDivs, yOffset = 0) => {
+    colorDivs.forEach((colorDiv, index) => {
+      ctx.fillStyle = colorDiv.style.backgroundColor;
+      ctx.fillRect((index % maxCols) * itemSize, yOffset + Math.floor(index / maxCols) * itemSize, itemSize, itemSize);
+    });
+  };
   
   // ダウンロード
   const triggerDownload = (canvas, filePrefix = "download") => {
