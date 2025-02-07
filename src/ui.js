@@ -422,13 +422,7 @@
         downloadCtx.strokeRect(col * itemSize, yOffset + row * itemSize, itemSize, itemSize);
       });
       
-      const dataURL = downloadCanvas.toDataURL("image/png");
-      const a = document.createElement('a');
-      const now = new Date().toISOString();
-      a.download = `color_history_with_image_${now}.png`;
-      a.href = dataURL;
-      a.click();
-      
+      triggerDownload(downloadCanvas, "color_history_with_image_");
     } else {
       // ヒストリー情報のみでダウンロード
       const downloadCanvas = document.createElement('canvas');
@@ -444,12 +438,7 @@
         downloadCtx.fillRect(col * itemSize, row * itemSize, itemSize, itemSize);
       });
       
-      const dataURL = downloadCanvas.toDataURL("image/png");
-      const a = document.createElement('a');
-      const now = new Date().toISOString();
-      a.download = `color_history_only_${now}.png`;
-      a.href = dataURL;
-      a.click();
+      triggerDownload(downloadCanvas, "color_history_only_");
     }
   });
   
@@ -476,13 +465,7 @@
         downloadCtx.fillRect(index % 16 * 40, yOffset + Math.floor(index / 16) * 40, 40, 40);
       });
       
-      // ダウンロード
-      const dataURL = downloadCanvas.toDataURL('image/png');
-      const a = document.createElement('a');
-      const now = new Date().toISOString();
-      a.download = `image_with_palette_${now}.png`;
-      a.href = dataURL;
-      a.click();
+      triggerDownload(downloadCanvas, "image_with_palette_");
     } else {
       // カラーパレット情報のみダウンロード
       const downloadCanvas = document.createElement('canvas');
@@ -498,20 +481,28 @@
         downloadCtx.fillRect(index % 16 * 40, Math.floor(index / 16) * 40, 40, 40);
       });
       
-      // ダウンロード
-      const dataURL = downloadCanvas.toDataURL('image/png');
-      const a = document.createElement('a');
-      const now = new Date().toISOString();
-      a.download = `palette_only_${now}.png`;
-      a.href = dataURL;
-      a.click();
+      triggerDownload(downloadCanvas, "palette_only_");
     }
   });
   
-    /**
-    * 一番上にスクロール機能
-    */
-    // スクロールイベントで「一番上にスクロール」ボタンの表示切替
+  // ダウンロード
+  const triggerDownload = (canvas, filePrefix = "download") => {
+    if (!canvas) {
+      console.error("Canvas is not provided.");
+      return;
+    }
+    
+    const dataURL = canvas.toDataURL("image/png");
+    const a = document.createElement("a");
+    a.download = `${filePrefix}_${new Date().toISOString()}.png`;
+    a.href = dataURL;
+    a.click();
+  };
+  
+  /**
+   * 一番上にスクロール機能
+  */
+  // スクロールイベントで「一番上にスクロール」ボタンの表示切替
   window.addEventListener('scroll', () => {
     // ヘッダーの高さ（この例では約80px）
     const headerHeight = 80;

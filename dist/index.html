@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>✨MagicPaletteAnalyzer - 画像から色を召喚する魔導具 ver 0.0.4</title>
+  <title>✨MagicPaletteAnalyzer - 画像から色を召喚する魔導具 ver 0.0.5</title>
   <meta name="viewport" content="initial-scale=1.0,width=device-width,viewport-fit=cover">
   <meta name="description"
   content="MagicPaletteAnalyzer - 画像に宿る色の精霊を可視化するカラーパレット生成ツール。瞳の色から風景まで、あらゆる画像を16色の魔方陣へ変換。術師のための色彩錬金術ツール。">
@@ -49,7 +49,7 @@
         <!-- タイトル -->
         <h1 class="text-2xl font-bold">MagicPaletteAnalyzer<span class="hidden md:inline">✨🎨🔍</span></h1>
         <!-- バージョン -->
-        <span class="text-sm text-gray-500 dark:text-white-500">ver 0.0.4</span>
+        <span class="text-sm text-gray-500 dark:text-white-500">ver 0.0.5</span>
       </div>
       <div class="flex items-center gap-4">
         <!-- 使用方法（アコーディオン） -->
@@ -729,13 +729,7 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
         downloadCtx.strokeRect(col * itemSize, yOffset + row * itemSize, itemSize, itemSize);
       });
       
-      const dataURL = downloadCanvas.toDataURL("image/png");
-      const a = document.createElement('a');
-      const now = new Date().toISOString();
-      a.download = `color_history_with_image_${now}.png`;
-      a.href = dataURL;
-      a.click();
-      
+      triggerDownload(downloadCanvas, "color_history_with_image_");
     } else {
       // ヒストリー情報のみでダウンロード
       const downloadCanvas = document.createElement('canvas');
@@ -751,12 +745,7 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
         downloadCtx.fillRect(col * itemSize, row * itemSize, itemSize, itemSize);
       });
       
-      const dataURL = downloadCanvas.toDataURL("image/png");
-      const a = document.createElement('a');
-      const now = new Date().toISOString();
-      a.download = `color_history_only_${now}.png`;
-      a.href = dataURL;
-      a.click();
+      triggerDownload(downloadCanvas, "color_history_only_");
     }
   });
   
@@ -783,13 +772,7 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
         downloadCtx.fillRect(index % 16 * 40, yOffset + Math.floor(index / 16) * 40, 40, 40);
       });
       
-      // ダウンロード
-      const dataURL = downloadCanvas.toDataURL('image/png');
-      const a = document.createElement('a');
-      const now = new Date().toISOString();
-      a.download = `image_with_palette_${now}.png`;
-      a.href = dataURL;
-      a.click();
+      triggerDownload(downloadCanvas, "image_with_palette_");
     } else {
       // カラーパレット情報のみダウンロード
       const downloadCanvas = document.createElement('canvas');
@@ -805,20 +788,28 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
         downloadCtx.fillRect(index % 16 * 40, Math.floor(index / 16) * 40, 40, 40);
       });
       
-      // ダウンロード
-      const dataURL = downloadCanvas.toDataURL('image/png');
-      const a = document.createElement('a');
-      const now = new Date().toISOString();
-      a.download = `palette_only_${now}.png`;
-      a.href = dataURL;
-      a.click();
+      triggerDownload(downloadCanvas, "palette_only_");
     }
   });
   
-    /**
-    * 一番上にスクロール機能
-    */
-    // スクロールイベントで「一番上にスクロール」ボタンの表示切替
+  // ダウンロード
+  const triggerDownload = (canvas, filePrefix = "download") => {
+    if (!canvas) {
+      console.error("Canvas is not provided.");
+      return;
+    }
+    
+    const dataURL = canvas.toDataURL("image/png");
+    const a = document.createElement("a");
+    a.download = `${filePrefix}_${new Date().toISOString()}.png`;
+    a.href = dataURL;
+    a.click();
+  };
+  
+  /**
+   * 一番上にスクロール機能
+  */
+  // スクロールイベントで「一番上にスクロール」ボタンの表示切替
   window.addEventListener('scroll', () => {
     // ヘッダーの高さ（この例では約80px）
     const headerHeight = 80;
