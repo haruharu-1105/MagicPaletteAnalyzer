@@ -77,12 +77,6 @@ class NamedColor {
     static COLORS = {
 $( $jsArray -join ",`n" )
     };
-    // HEX 値から最も近い色名の結果をキャッシュする Map
-    // Map は挿入順を保持するので、最初の要素が最も古く使われたものとなります
-    static closestColorCache = new Map();
-    
-    // キャッシュの最大項目数を定義
-    static cacheLimit = 100;
     
     /**
      * 指定された HEX 値に完全一致する色名を返します。

@@ -158,12 +158,6 @@ class NamedColor {
 	"whitesmoke": { hex: "#f5f5f5", rgb: [245, 245, 245] },
 	"yellowgreen": { hex: "#9acd32", rgb: [154, 205, 50] }
     };
-    // HEX 値から最も近い色名の結果をキャッシュする Map
-    // Map は挿入順を保持するので、最初の要素が最も古く使われたものとなります
-    static closestColorCache = new Map();
-    
-    // キャッシュの最大項目数を定義
-    static cacheLimit = 100;
     
     /**
      * 指定された HEX 値に完全一致する色名を返します。
