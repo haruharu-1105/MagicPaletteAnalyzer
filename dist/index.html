@@ -357,30 +357,50 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
     isFrameScheduled = true;
     requestAnimationFrame(() => {
       // カラー情報のプレビュー
-      updateColorPreview(e);
-
-      // フレーム実行後にフラグをリセット
-      isFrameScheduled = false;
+      const { x, y } = getCanvasCoordinates(e, uiElements.canvas);
+      const [r, g, b, a] = ctx.getImageData(x, y, 1, 1).data;
+      try {
+        if (a === 0) {
+          return;
+        }
+        
+        const hex = ColorHelper.rgbToHex(r, g, b);
+        // カーソル下の色で現在選択色を更新
+        updateCurrentColor(hex);
+      } finally {
+        // フレーム実行後にフラグをリセット
+        isFrameScheduled = false;
+      } 
     });
   }
   /**
-  * 交互開始時のハンドラ（マウス、タッチどちらも）
+  * 開始時のハンドラ（マウス、タッチどちらも）
   * @param {Event} e 
   */
   function onInteractionStart(e) {
     e.preventDefault(); // デフォルト動作の抑制（タッチスクロールなどを防ぐ）
     isDragging = true;
     throttledMouseMoveHandler(e);
+    updateColorPreview(e);
   }
   
   /**
-  * 移動時のハンドラ（マウス）
+  * 移動時のハンドラ（マウス、タッチどちらも）
   * @param {Event} e 
   */
   function onInteractionMove(e) {
     e.preventDefault();
-    if (isDragging) {
+    if (!isDragging) {
+      return;
+    }
+    
+    if (e.type.startsWith("touch")) {
+      // タッチイベントの場合は最初のタッチ情報を使う
+      throttledMouseMoveHandler(e.touches[0]);
+      updateColorPreview(e.touches[0]);
+    } else {
       throttledMouseMoveHandler(e);
+      updateColorPreview(e);
     }
   }
   
@@ -390,6 +410,7 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
   */
   function onInteractionEnd(e) {
     e.preventDefault();
+    updateColorPreview(e);
     isDragging = false;
   }
   
@@ -400,11 +421,7 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
   
   // タッチイベントの登録
   uiElements.canvas.addEventListener('touchstart', onInteractionStart);
-  uiElements.canvas.addEventListener('touchmove', (e) => {
-     e.preventDefault();
-     // タッチイベントの場合は最初のタッチ情報を使う
-     throttledMouseMoveHandler(e.touches[0]);
-  });
+  uiElements.canvas.addEventListener('touchmove', onInteractionMove);
   uiElements.canvas.addEventListener('touchend', onInteractionEnd);
   
   /**
@@ -452,6 +469,9 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
     uiElements.colorPreview.style.left = `${e.clientX - containerRect.left - 40}px`;
     uiElements.colorPreview.style.top = `${e.clientY - containerRect.top - 40}px`;
     uiElements.colorPreview.style.display = 'flex';
+    
+    // カーソル下の色で現在選択色を更新
+    updateCurrentColor(hex);
   };
   
   /** ヘルパー関数：16進数から現在色表示を更新する
@@ -620,17 +640,10 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
     
     uiElements.downloadPaletteBtn.disabled = uiElements.paletteContainer.children.length === 0;
   }
-  
   // マウス移動時にカーソル下の色を取得して表示
   uiElements.canvas.addEventListener('mousemove', (e) => {
-    const { x, y } = getCanvasCoordinates(e, uiElements.canvas);
-    const pixel = ctx.getImageData(x, y, 1, 1).data;
-    const [r, g, b, a] = pixel;
-    if (a === 0) return;  // 透明な場合は無視
-    const hex = ColorHelper.rgbToHex(r, g, b);
-    updateCurrentColor(hex)
+    throttledMouseMoveHandler(e);
   });
-  
   // クリック時に現在のカーソル色をカラーヒストリーに追加
   uiElements.canvas.addEventListener('click', (e) => {
     const { x, y } = getCanvasCoordinates(e, uiElements.canvas);
