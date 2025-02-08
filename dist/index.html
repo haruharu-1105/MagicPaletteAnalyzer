@@ -49,7 +49,7 @@
         <!-- タイトル -->
         <h1 class="text-2xl font-bold">MagicPaletteAnalyzer<span class="hidden md:inline">✨🎨🔍</span></h1>
         <!-- バージョン -->
-        <span class="text-sm text-gray-500 dark:text-white-500">ver 0.0.5</span>
+        <span id="version" class="text-sm">ver 0.0.5</span>
       </div>
       <div class="flex items-center gap-4">
         <!-- 使用方法（アコーディオン） -->
@@ -309,6 +309,7 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
 
   // UI 要素の管理オブジェクト
   const uiElements = {
+    version: document.getElementById('version'), // バージョン情報部
     themeToggleBtn: document.getElementById('theme-toggle'),
     fileInput: document.getElementById('file-input'), // 画像アップロードのファイル入力
     dropArea: document.getElementById('drop-area'),// ドラッグ＆ドロップ領域
@@ -337,7 +338,7 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
       throw new Error(`UI element with id '${key}' is missing from the document.`);
     }
   });
-  
+
   const ctx = uiElements.canvas.getContext('2d');
   
   // 最終選択色
@@ -1000,12 +1001,6 @@ class NamedColor {
 	"whitesmoke": { hex: "#f5f5f5", rgb: [245, 245, 245] },
 	"yellowgreen": { hex: "#9acd32", rgb: [154, 205, 50] }
     };
-    // HEX 値から最も近い色名の結果をキャッシュする Map
-    // Map は挿入順を保持するので、最初の要素が最も古く使われたものとなります
-    static closestColorCache = new Map();
-    
-    // キャッシュの最大項目数を定義
-    static cacheLimit = 100;
     
     /**
      * 指定された HEX 値に完全一致する色名を返します。
@@ -1073,6 +1068,12 @@ class NamedColor {
   // テーマ切替・初期表示処理
   // -------------------------------
   this.themeManager = new ThemeManager();
+
+  // ネット環境（httpsプロトコル）で実行されているかを判定
+  if (window.location.protocol === "https:") {
+     // ネット環境とローカル環境を区別しやすくするため変更
+     uiElements.version.classList.add("font-bold", "italic");
+  }
 
   </script>
 </body>

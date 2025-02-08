@@ -2,6 +2,7 @@
 
   // UI 要素の管理オブジェクト
   const uiElements = {
+    version: document.getElementById('version'), // バージョン情報部
     themeToggleBtn: document.getElementById('theme-toggle'),
     fileInput: document.getElementById('file-input'), // 画像アップロードのファイル入力
     dropArea: document.getElementById('drop-area'),// ドラッグ＆ドロップ領域
@@ -30,7 +31,7 @@
       throw new Error(`UI element with id '${key}' is missing from the document.`);
     }
   });
-  
+
   const ctx = uiElements.canvas.getContext('2d');
   
   // 最終選択色
