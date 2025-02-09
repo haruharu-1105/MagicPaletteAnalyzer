@@ -32,7 +32,7 @@
     }
   });
 
-  const ctx = uiElements.canvas.getContext('2d');
+  const ctx = uiElements.canvas.getContext('2d', { willReadFrequently: true });
   
   // 最終選択色
   let lastColor = null;
@@ -74,8 +74,9 @@
   function onInteractionStart(e) {
     e.preventDefault(); // デフォルト動作の抑制（タッチスクロールなどを防ぐ）
     isDragging = true;
-    throttledMouseMoveHandler(e);
-    updateColorPreview(e);
+    const ev = e.touches?.[0] || e;
+    throttledMouseMoveHandler(ev);
+    updateColorPreview(ev);
   }
   
   /**
@@ -84,18 +85,13 @@
   */
   function onInteractionMove(e) {
     e.preventDefault();
+    const ev = e.touches?.[0] || e;
+    throttledMouseMoveHandler(ev);
+    
     if (!isDragging) {
       return;
     }
-    
-    if (e.type.startsWith("touch")) {
-      // タッチイベントの場合は最初のタッチ情報を使う
-      throttledMouseMoveHandler(e.touches[0]);
-      updateColorPreview(e.touches[0]);
-    } else {
-      throttledMouseMoveHandler(e);
-      updateColorPreview(e);
-    }
+    updateColorPreview(ev);
   }
   
   /**
@@ -104,7 +100,9 @@
   */
   function onInteractionEnd(e) {
     e.preventDefault();
-    updateColorPreview(e);
+    const ev = e.touches?.[0] || e;
+    throttledMouseMoveHandler(ev);
+    updateColorPreview(ev);
     isDragging = false;
   }
   
@@ -334,10 +332,7 @@
     
     uiElements.downloadPaletteBtn.disabled = uiElements.paletteContainer.children.length === 0;
   }
-  // マウス移動時にカーソル下の色を取得して表示
-  uiElements.canvas.addEventListener('mousemove', (e) => {
-    throttledMouseMoveHandler(e);
-  });
+
   // クリック時に現在のカーソル色をカラーヒストリーに追加
   uiElements.canvas.addEventListener('click', (e) => {
     const { x, y } = getCanvasCoordinates(e, uiElements.canvas);
