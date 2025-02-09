@@ -57,7 +57,7 @@ $jsArray = [System.Collections.ArrayList]@()
 # JavaScript用データ生成
 foreach ($key in $colorDict.Keys) {
     $color = $colorDict[$key]
-    $line = "`t`"$key`": { hex: `"$($color.hex)`", rgb: [$($color.rgb -join ', ')] }"
+    $line = "    `"$key`": { hex: `"$($color.hex)`", rgb: [$($color.rgb -join ', ')] }"
     [void]$jsArray.Add($line)
 }
 
@@ -97,45 +97,28 @@ $( $jsArray -join ",`n" )
 
     /**
      * 指定された HEX 値に最も近い色の名前を返します。
-     * 色の近さは、RGB 各成分のユークリッド距離に基づいて計算されます。
+     * 色の近さは、Lab色空間で計算される距離に基づいています。
      * 入力 HEX 値が不正な場合は null を返します。
      *
      * @param {string} hex - 探索対象の HEX カラーコード（例: "#3f627e"）。
      * @returns {string|null} - 最も近い色の名前、もしくは null。
      */
     static findClosestHex(hex) {
-        const rgb = NamedColor.hexToRgb(hex);
-        if (!rgb) return null;
-        let closestColor = null;
-        let minDistance = Infinity;
-        for (const [name, color] of Object.entries(NamedColor.COLORS)) {
-            const distance = Math.sqrt(
-                Math.pow(rgb[0] - color.rgb[0], 2) +
-                Math.pow(rgb[1] - color.rgb[1], 2) +
-                Math.pow(rgb[2] - color.rgb[2], 2)
-            );
-            if (distance < minDistance) {
-                minDistance = distance;
-                closestColor = name;
-            }
+      const color = chroma(hex);  // 入力されたHEXカラー
+      if (!color) return null;
+
+      let closestColor = null;
+      let minDistance = Infinity;
+
+      for (const [name, namedColor] of Object.entries(NamedColor.COLORS)) {
+        const distance = chroma.distance(color, chroma(namedColor.hex), 'lab'); // Lab空間で距離を計算
+        if (distance < minDistance) {
+            minDistance = distance;
+            closestColor = name;
         }
-        
-        return closestColor;
-    }
-    /**
-     * HEX カラーコードを RGB 配列に変換します。
-     * 3桁の省略形もサポートします。
-     *
-     * @param {string} hex - 変換対象の HEX カラーコード（例: "#fff" や "#ffffff"）。
-     * @returns {number[]} - 変換された RGB 値の配列（例: [255, 255, 255]）。
-     */
-    static hexToRgb(hex) {
-        hex = hex.replace(/^#/, '');
-        if (hex.length === 3) {
-            hex = hex.split('').map(c => c + c).join('');
-        }
-        const bigint = parseInt(hex, 16);
-        return [(bigint >> 16) & 255, (bigint >> 8) & 255, bigint & 255];
+      }
+      
+      return closestColor;
     }
 }
 
