@@ -191,7 +191,7 @@
     
     const [r, g, b] = currentColor.rgb();
     uiElements.colorRgb.textContent = `${r}, ${g}, ${b}`;
-    const [h, s, v] = new ColorHelper(hex).toHsv();
+    const [h, s, v] = ColorHelper.rgbToHsv(r, g, b);
     uiElements.colorHsv.textContent = `${h}, ${s}, ${v}`;
     //console.log(hex);
   }
