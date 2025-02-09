@@ -172,7 +172,7 @@
   */
   function updateCurrentColor(color) {
     const hex = color.hex();
-
+    
     uiElements.currentColorDisplay.style.background = hex;
     uiElements.colorHex.textContent = hex;
     
@@ -193,8 +193,13 @@
     const [r, g, b] = color.rgb();
     uiElements.colorRgb.textContent = `${r}, ${g}, ${b}`;
     
-    const [h, s, v] = ColorHelper.rgbToHsv(r, g, b);
-    uiElements.colorHsv.textContent = `${h}, ${s}, ${v}`;
+    let [h, s, v] = color.hsv();
+    // 1. グレースケールの場合（s が 0 または hue が NaN）の場合、色相を 0 に補正
+    if (isNaN(h) || s === 0) {
+      h = 0;
+    }
+    uiElements.colorHsv.textContent = `${Math.round(h)}, ${Math.round(s * 100)}, ${Math.round(v * 100)}`;
+    
     //console.log(color);
   }
   

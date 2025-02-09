@@ -10,7 +10,6 @@ Set-Location $scriptDir
 $template_file = "src/index.template.html"
 # JavaScriptファイルの読み込み順を定義
 $jsFiles = @(
-    "src/color-helper.js",
     "src/ui.js",
     "src/theme-manager.js",
     "src/named-color.js",

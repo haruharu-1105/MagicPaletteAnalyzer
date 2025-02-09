@@ -197,40 +197,7 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
 </div>
   <!-- インライン JavaScript -->
   <script>
-    // src/color-helper.js
-
-  // ------------------------------------------------
-  // ColorHelper クラス（色変換・情報取得用のユーティリティクラス）
-  // ------------------------------------------------
-  class ColorHelper {
-    /**
-    * RGB値から HSV 値へ変換する静的メソッド  
-    * @param {number} r 
-    * @param {number} g 
-    * @param {number} b 
-    * @returns {Array} [h, s, v]（h: 0～360, s,v: 0～100）
-    */
-    static rgbToHsv(r, g, b) {
-      r /= 255; g /= 255; b /= 255;
-      const max = Math.max(r, g, b);
-      const min = Math.min(r, g, b);
-      let h, s, v = max;
-      const d = max - min;
-      s = max === 0 ? 0 : d / max;
-      if (max === min) {
-        h = 0;
-      } else {
-        switch (max) {
-          case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-          case g: h = (b - r) / d + 2; break;
-          case b: h = (r - g) / d + 4; break;
-        }
-        h /= 6;
-      }
-      return [Math.round(h * 360), Math.round(s * 100), Math.round(v * 100)];
-    }
-  }
-// src/ui.js
+    // src/ui.js
 
   // UI 要素の管理オブジェクト
   const uiElements = {
@@ -404,7 +371,7 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
   */
   function updateCurrentColor(color) {
     const hex = color.hex();
-
+    
     uiElements.currentColorDisplay.style.background = hex;
     uiElements.colorHex.textContent = hex;
     
@@ -425,8 +392,13 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
     const [r, g, b] = color.rgb();
     uiElements.colorRgb.textContent = `${r}, ${g}, ${b}`;
     
-    const [h, s, v] = ColorHelper.rgbToHsv(r, g, b);
-    uiElements.colorHsv.textContent = `${h}, ${s}, ${v}`;
+    let [h, s, v] = color.hsv();
+    // 1. グレースケールの場合（s が 0 または hue が NaN）の場合、色相を 0 に補正
+    if (isNaN(h) || s === 0) {
+      h = 0;
+    }
+    uiElements.colorHsv.textContent = `${Math.round(h)}, ${Math.round(s * 100)}, ${Math.round(v * 100)}`;
+    
     //console.log(color);
   }
   
