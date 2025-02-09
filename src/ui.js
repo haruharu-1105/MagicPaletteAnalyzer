@@ -343,15 +343,17 @@
     const hex = chroma(r, g, b).hex();
     addColorToHistory(hex);
   });
-  /** 明度判定のための関数（輝度計算）
-  * @param {string} hex
+
+  /** 輝度が低ければ暗いと判断
+  * @param {string} hex - 色を表す16進数のカラーコード
+  * @returns {boolean} - 色が暗い場合にtrue、明るい場合にfalseを返す
   */
   function isDarkColor(hex) {
-    const [ r, g, b ] = chroma(hex).rgb();
-    // 輝度の計算（ITU-R BT.601 係数を利用）
-    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-    return brightness < 128; // 輝度が低ければ暗いと判断
+    const luminance = chroma(hex).luminance();
+    // 輝度が0.5未満なら暗い色、0.5以上なら明るい色
+    return luminance < 0.5;
   }
+
   /** カラーヒストリーに色を追加する関数
   * @param {string} hex
   */
