@@ -148,14 +148,15 @@
     const [r, g, b, a] = ctx.getImageData(x, y, 1, 1).data;
     if (a === 0) return;
     
-    const hex = chroma(r, g, b).hex();
+    const color = chroma(r, g, b);
+    const hex = color.hex();
     
     // キャンバスコンテナの座標を取得
     const containerRect = uiElements.canvasContainer.getBoundingClientRect();
     
     // プレビューの更新（コンテナ内の座標に変換）
     uiElements.colorPreview.style.backgroundColor = hex;
-    uiElements.colorPreview.style.color = isDarkColor(hex) ? '#ffffff' : '#000000';
+    uiElements.colorPreview.style.color = isDarkColor(color) ? '#ffffff' : '#000000';
     uiElements.colorPreview.textContent = hex;
     // container内の相対位置に変換（プレビューサイズは80pxなので半分の40pxを引く）
     uiElements.colorPreview.style.left = `${e.clientX - containerRect.left - 40}px`;
@@ -345,11 +346,11 @@
   });
 
   /** 輝度が低ければ暗いと判断
-  * @param {string} hex - 色を表す16進数のカラーコード
+  * @param {chroma} color - 色
   * @returns {boolean} - 色が暗い場合にtrue、明るい場合にfalseを返す
   */
-  function isDarkColor(hex) {
-    const luminance = chroma(hex).luminance();
+  function isDarkColor(color) {
+    const luminance = color.luminance();
     // 輝度が0.5未満なら暗い色、0.5以上なら明るい色
     return luminance < 0.5;
   }
@@ -365,10 +366,11 @@
     uiElements.errorMessage.textContent = "";  // エラー解除
     lastColor = hex;
     
+    const color = chroma(hex);
     const colorDiv = document.createElement('div');
     colorDiv.className = 'color-box';
     colorDiv.style.background = hex;
-    colorDiv.style.color = isDarkColor(hex) ? "#ffffff" : "#000000";
+    colorDiv.style.color = isDarkColor(color) ? "#ffffff" : "#000000";
     colorDiv.title = hex;
     colorDiv.textContent = hex;
     uiElements.historyContainer.prepend(colorDiv);
