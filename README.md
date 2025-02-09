@@ -24,5 +24,12 @@ MagicPaletteAnalyzer は 初回のライブラリ読み込み以外は完全に�
 さらに、本プロジェクトは オープンソース であり、ソースコードを自由に確認・検証できるため、セキュリティ面でも透明性を確保しています。
 
 ## 🔧 開発者向け情報  
-### 📜 ソースコードライセンス  
+### ソースコードライセンス  
 [MIT License](LICENSE)  
+### 使用ライブラリライセンス  
+This application uses **chroma.js** (BSD-3-Clause).  
+chroma.js includes color data from **ColorBrewer**, which is licensed under **Apache License 2.0**.  
+For details, see [ThirdPartyNotices.txt](ThirdPartyNotices.txt).  
+
+chroma.js is loaded from CDN:  
+[https://cdnjs.cloudflare.com/ajax/libs/chroma-js/2.4.2/chroma.min.js](https://cdnjs.cloudflare.com/ajax/libs/chroma-js/2.4.2/chroma.min.js)  

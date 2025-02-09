@@ -6,6 +6,7 @@
   <meta name="viewport" content="initial-scale=1.0,width=device-width,viewport-fit=cover">
   <meta name="description"
   content="MagicPaletteAnalyzer - 画像に宿る色の精霊を可視化するカラーパレット生成ツール。瞳の色から風景まで、あらゆる画像を16色の魔方陣へ変換。術師のための色彩錬金術ツール。">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chroma-js/2.4.2/chroma.min.js"></script>
   <!-- Tailwind CSS CDN（簡易的な利用例） -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- TailwindCSSでdark modeを有効にするための設定例 -->
@@ -234,25 +235,6 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
     }
     
     /**
-    * RGBから16進数表記に変換する静的メソッド
-    * @param {number} r 
-    * @param {number} g 
-    * @param {number} b 
-    * @returns {string} "#RRGGBB" 形式の文字列
-    */
-    static rgbToHex(r, g, b) {
-      return "#" + [r, g, b].map(c => c.toString(16).padStart(2, '0')).join('');
-    }
-    
-    /**
-    * インスタンスの RGB 値から 16進数表記に変換する
-    * @returns {string} "#RRGGBB" 形式の文字列
-    */
-    toHex() {
-      return ColorHelper.rgbToHex(this.rgb.r, this.rgb.g, this.rgb.b);
-    }
-    
-    /**
     * RGB値から HSV 値へ変換する静的メソッド  
     * @param {number} r 
     * @param {number} g 
@@ -285,24 +267,6 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
     */
     toHsv() {
       return ColorHelper.rgbToHsv(this.rgb.r, this.rgb.g, this.rgb.b);
-    }
-    /**
-    * インスタンスの RGB 値から RGB オブジェクトへ変換する
-    * @returns {Array} [r, g, b]
-    */
-    toRGB() {
-      return [this.rgb.r, this.rgb.g, this.rgb.b];
-    }
-    
-    /**
-    * ファクトリーメソッド：RGB値からインスタンス生成
-    * @param {number} r
-    * @param {number} g
-    * @param {number} b
-    * @returns {ColorHelper}
-    */
-    static fromRgb(r, g, b) {
-      return new ColorHelper({ r, g, b });
     }
   }
 // src/ui.js
@@ -365,7 +329,7 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
           return;
         }
         
-        const hex = ColorHelper.rgbToHex(r, g, b);
+        const hex = chroma(r, g, b).hex();
         // カーソル下の色で現在選択色を更新
         updateCurrentColor(hex);
       } finally {
@@ -455,7 +419,7 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
     const [r, g, b, a] = ctx.getImageData(x, y, 1, 1).data;
     if (a === 0) return;
     
-    const hex = ColorHelper.rgbToHex(r, g, b);
+    const hex = chroma(r, g, b).hex();
     
     // キャンバスコンテナの座標を取得
     const containerRect = uiElements.canvasContainer.getBoundingClientRect();
@@ -477,6 +441,7 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
   * @param {string} hex
   */
   function updateCurrentColor(hex) {
+    const currentColor = chroma(hex);
     uiElements.currentColorDisplay.style.background = hex;
     uiElements.colorHex.textContent = hex;
     
@@ -494,10 +459,9 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
       uiElements.colorClosestName.textContent = currentColorClosestName;
     }
     
-    const currentColor = new ColorHelper(hex);
-    const [r, g, b] = currentColor.toRGB();
+    const [r, g, b] = currentColor.rgb();
     uiElements.colorRgb.textContent = `${r}, ${g}, ${b}`;
-    const [h, s, v] = currentColor.toHsv();
+    const [h, s, v] = new ColorHelper(hex).toHsv();
     uiElements.colorHsv.textContent = `${h}, ${s}, ${v}`;
     //console.log(hex);
   }
@@ -623,7 +587,8 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
     // カラーパレット表示（横16個×縦4個のグリッド）
     sortedColors.forEach(([colorKey, count]) => {
       const [r, g, b] = colorKey.split(',').map(Number);
-      const hex = ColorHelper.rgbToHex(r, g, b);
+      const hex = chroma(r, g, b).hex();
+
       const colorDiv = document.createElement('div');
       colorDiv.className = 'color-box';
       colorDiv.style.background = hex;
@@ -646,15 +611,14 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
     const pixel = ctx.getImageData(x, y, 1, 1).data;
     const [r, g, b, a] = pixel;
     if (a === 0) return;
-    const hex = ColorHelper.rgbToHex(r, g, b);
+    const hex = chroma(r, g, b).hex();
     addColorToHistory(hex);
   });
   /** 明度判定のための関数（輝度計算）
   * @param {string} hex
   */
   function isDarkColor(hex) {
-    // hex が "#RRGGBB" 形式の場合
-    const { r, g, b } = ColorHelper.hexToRgb(hex)
+    const [ r, g, b ] = chroma(hex).rgb();
     // 輝度の計算（ITU-R BT.601 係数を利用）
     const brightness = (r * 299 + g * 587 + b * 114) / 1000;
     return brightness < 128; // 輝度が低ければ暗いと判断

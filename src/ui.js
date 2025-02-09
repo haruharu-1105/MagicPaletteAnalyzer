@@ -58,7 +58,7 @@
           return;
         }
         
-        const hex = ColorHelper.rgbToHex(r, g, b);
+        const hex = chroma(r, g, b).hex();
         // カーソル下の色で現在選択色を更新
         updateCurrentColor(hex);
       } finally {
@@ -148,7 +148,7 @@
     const [r, g, b, a] = ctx.getImageData(x, y, 1, 1).data;
     if (a === 0) return;
     
-    const hex = ColorHelper.rgbToHex(r, g, b);
+    const hex = chroma(r, g, b).hex();
     
     // キャンバスコンテナの座標を取得
     const containerRect = uiElements.canvasContainer.getBoundingClientRect();
@@ -170,6 +170,7 @@
   * @param {string} hex
   */
   function updateCurrentColor(hex) {
+    const currentColor = chroma(hex);
     uiElements.currentColorDisplay.style.background = hex;
     uiElements.colorHex.textContent = hex;
     
@@ -187,10 +188,9 @@
       uiElements.colorClosestName.textContent = currentColorClosestName;
     }
     
-    const currentColor = new ColorHelper(hex);
-    const [r, g, b] = currentColor.toRGB();
+    const [r, g, b] = currentColor.rgb();
     uiElements.colorRgb.textContent = `${r}, ${g}, ${b}`;
-    const [h, s, v] = currentColor.toHsv();
+    const [h, s, v] = new ColorHelper(hex).toHsv();
     uiElements.colorHsv.textContent = `${h}, ${s}, ${v}`;
     //console.log(hex);
   }
@@ -316,7 +316,8 @@
     // カラーパレット表示（横16個×縦4個のグリッド）
     sortedColors.forEach(([colorKey, count]) => {
       const [r, g, b] = colorKey.split(',').map(Number);
-      const hex = ColorHelper.rgbToHex(r, g, b);
+      const hex = chroma(r, g, b).hex();
+
       const colorDiv = document.createElement('div');
       colorDiv.className = 'color-box';
       colorDiv.style.background = hex;
@@ -339,15 +340,14 @@
     const pixel = ctx.getImageData(x, y, 1, 1).data;
     const [r, g, b, a] = pixel;
     if (a === 0) return;
-    const hex = ColorHelper.rgbToHex(r, g, b);
+    const hex = chroma(r, g, b).hex();
     addColorToHistory(hex);
   });
   /** 明度判定のための関数（輝度計算）
   * @param {string} hex
   */
   function isDarkColor(hex) {
-    // hex が "#RRGGBB" 形式の場合
-    const { r, g, b } = ColorHelper.hexToRgb(hex)
+    const [ r, g, b ] = chroma(hex).rgb();
     // 輝度の計算（ITU-R BT.601 係数を利用）
     const brightness = (r * 299 + g * 587 + b * 114) / 1000;
     return brightness < 128; // 輝度が低ければ暗いと判断

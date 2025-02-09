@@ -36,25 +36,6 @@
     }
     
     /**
-    * RGBから16進数表記に変換する静的メソッド
-    * @param {number} r 
-    * @param {number} g 
-    * @param {number} b 
-    * @returns {string} "#RRGGBB" 形式の文字列
-    */
-    static rgbToHex(r, g, b) {
-      return "#" + [r, g, b].map(c => c.toString(16).padStart(2, '0')).join('');
-    }
-    
-    /**
-    * インスタンスの RGB 値から 16進数表記に変換する
-    * @returns {string} "#RRGGBB" 形式の文字列
-    */
-    toHex() {
-      return ColorHelper.rgbToHex(this.rgb.r, this.rgb.g, this.rgb.b);
-    }
-    
-    /**
     * RGB値から HSV 値へ変換する静的メソッド  
     * @param {number} r 
     * @param {number} g 
@@ -87,23 +68,5 @@
     */
     toHsv() {
       return ColorHelper.rgbToHsv(this.rgb.r, this.rgb.g, this.rgb.b);
-    }
-    /**
-    * インスタンスの RGB 値から RGB オブジェクトへ変換する
-    * @returns {Array} [r, g, b]
-    */
-    toRGB() {
-      return [this.rgb.r, this.rgb.g, this.rgb.b];
-    }
-    
-    /**
-    * ファクトリーメソッド：RGB値からインスタンス生成
-    * @param {number} r
-    * @param {number} g
-    * @param {number} b
-    * @returns {ColorHelper}
-    */
-    static fromRgb(r, g, b) {
-      return new ColorHelper({ r, g, b });
     }
   }
