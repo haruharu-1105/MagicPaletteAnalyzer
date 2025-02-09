@@ -58,9 +58,9 @@
           return;
         }
         
-        const hex = chroma(r, g, b).hex();
+        const color = chroma(r, g, b);
         // カーソル下の色で現在選択色を更新
-        updateCurrentColor(hex);
+        updateCurrentColor(color);
       } finally {
         // フレーム実行後にフラグをリセット
         isFrameScheduled = false;
@@ -164,14 +164,15 @@
     uiElements.colorPreview.style.display = 'flex';
     
     // カーソル下の色で現在選択色を更新
-    updateCurrentColor(hex);
+    updateCurrentColor(color);
   };
   
-  /** ヘルパー関数：16進数から現在色表示を更新する
-  * @param {string} hex
+  /** 現在色表示を更新する
+  * @param {chroma} color - 色
   */
-  function updateCurrentColor(hex) {
-    const currentColor = chroma(hex);
+  function updateCurrentColor(color) {
+    const hex = color.hex();
+
     uiElements.currentColorDisplay.style.background = hex;
     uiElements.colorHex.textContent = hex;
     
@@ -189,11 +190,12 @@
       uiElements.colorClosestName.textContent = currentColorClosestName;
     }
     
-    const [r, g, b] = currentColor.rgb();
+    const [r, g, b] = color.rgb();
     uiElements.colorRgb.textContent = `${r}, ${g}, ${b}`;
+    
     const [h, s, v] = ColorHelper.rgbToHsv(r, g, b);
     uiElements.colorHsv.textContent = `${h}, ${s}, ${v}`;
-    //console.log(hex);
+    //console.log(color);
   }
   
   let img = new Image();
@@ -317,7 +319,9 @@
     // カラーパレット表示（横16個×縦4個のグリッド）
     sortedColors.forEach(([colorKey, count]) => {
       const [r, g, b] = colorKey.split(',').map(Number);
-      const hex = chroma(r, g, b).hex();
+      const color = chroma(r, g, b);
+      const hex = color.hex();
+      
 
       const colorDiv = document.createElement('div');
       colorDiv.className = 'color-box';
@@ -326,7 +330,7 @@
       colorDiv.textContent = "";
       
       colorDiv.addEventListener('click', () => {
-        updateCurrentColor(hex);
+        updateCurrentColor(color);
         addColorToHistory(hex);
       });
       uiElements.paletteContainer.appendChild(colorDiv);
