@@ -321,7 +321,6 @@
       const [r, g, b] = colorKey.split(',').map(Number);
       const color = chroma(r, g, b);
       const hex = color.hex();
-      
 
       const colorDiv = document.createElement('div');
       colorDiv.className = 'color-box';
@@ -331,7 +330,7 @@
       
       colorDiv.addEventListener('click', () => {
         updateCurrentColor(color);
-        addColorToHistory(hex);
+        addColorToHistory(color);
       });
       uiElements.paletteContainer.appendChild(colorDiv);
     });
@@ -345,8 +344,8 @@
     const pixel = ctx.getImageData(x, y, 1, 1).data;
     const [r, g, b, a] = pixel;
     if (a === 0) return;
-    const hex = chroma(r, g, b).hex();
-    addColorToHistory(hex);
+    const color = chroma(r, g, b);
+    addColorToHistory(color);
   });
 
   /** 輝度が低ければ暗いと判断
@@ -360,9 +359,10 @@
   }
 
   /** カラーヒストリーに色を追加する関数
-  * @param {string} hex
+  * @param {chroma} color - 色
   */
-  function addColorToHistory(hex) {
+  function addColorToHistory(color) {
+    const hex = color.hex();
     if (hex === lastColor) {
       uiElements.errorMessage.textContent = "直前の色と同じため追加できません。";
       return;
@@ -370,7 +370,6 @@
     uiElements.errorMessage.textContent = "";  // エラー解除
     lastColor = hex;
     
-    const color = chroma(hex);
     const colorDiv = document.createElement('div');
     colorDiv.className = 'color-box';
     colorDiv.style.background = hex;

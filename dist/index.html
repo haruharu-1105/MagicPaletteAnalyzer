@@ -553,7 +553,6 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
       const [r, g, b] = colorKey.split(',').map(Number);
       const color = chroma(r, g, b);
       const hex = color.hex();
-      
 
       const colorDiv = document.createElement('div');
       colorDiv.className = 'color-box';
@@ -563,7 +562,7 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
       
       colorDiv.addEventListener('click', () => {
         updateCurrentColor(color);
-        addColorToHistory(hex);
+        addColorToHistory(color);
       });
       uiElements.paletteContainer.appendChild(colorDiv);
     });
@@ -577,8 +576,8 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
     const pixel = ctx.getImageData(x, y, 1, 1).data;
     const [r, g, b, a] = pixel;
     if (a === 0) return;
-    const hex = chroma(r, g, b).hex();
-    addColorToHistory(hex);
+    const color = chroma(r, g, b);
+    addColorToHistory(color);
   });
 
   /** 輝度が低ければ暗いと判断
@@ -592,9 +591,10 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
   }
 
   /** カラーヒストリーに色を追加する関数
-  * @param {string} hex
+  * @param {chroma} color - 色
   */
-  function addColorToHistory(hex) {
+  function addColorToHistory(color) {
+    const hex = color.hex();
     if (hex === lastColor) {
       uiElements.errorMessage.textContent = "直前の色と同じため追加できません。";
       return;
@@ -602,7 +602,6 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
     uiElements.errorMessage.textContent = "";  // エラー解除
     lastColor = hex;
     
-    const color = chroma(hex);
     const colorDiv = document.createElement('div');
     colorDiv.className = 'color-box';
     colorDiv.style.background = hex;
