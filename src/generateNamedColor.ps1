@@ -51,14 +51,25 @@ Get-Content $inputFile | ForEach-Object {
     }
 }
 
-# JavaScriptのオブジェクト用リスト
-$jsArray = [System.Collections.ArrayList]@()
+# JavaScript用データ生成（3列で出力）
+$sb = New-Object System.Text.StringBuilder
+$counter = 0
 
-# JavaScript用データ生成
 foreach ($key in $colorDict.Keys) {
     $color = $colorDict[$key]
-    $line = "    `"$key`": { hex: `"$($color.hex)`", rgb: [$($color.rgb -join ', ')] }"
-    [void]$jsArray.Add($line)
+    $line = "`"$key`": { hex: `"$($color.hex)`", rgb: [$($color.rgb -join ', ')] }"
+
+    if ($counter -gt 0) {
+        # 3列ごとに改行、それ以外はカンマ区切り
+        if ($counter % 3 -eq 0) {
+            [void]$sb.AppendLine(",")  # 改行
+        } else {
+            [void]$sb.Append(", ")
+        }
+    }
+    
+    [void]$sb.Append($line)
+    $counter++
 }
 
 # JavaScriptファイルとして保存
@@ -75,7 +86,7 @@ class NamedColor {
      * 各キーは色名を表し、対応する値は HEX 表記と RGB 配列を持つオブジェクトです。
      */
     static COLORS = {
-$( $jsArray -join ",`n" )
+$( $sb.ToString() )
     };
     
     /**
