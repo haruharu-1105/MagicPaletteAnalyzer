@@ -39,7 +39,30 @@
       pointer-events: none;
       transition: transform 0.1s ease-out;
     }
-  </style>
+  .sparkle {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: radial-gradient(circle, #fff, rgba(255,255,255,0));
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 50;
+    transform: translate(0, 0);
+    opacity: 1;
+    animation: sparkleAnim 600ms ease-out forwards;
+  }
+  @keyframes sparkleAnim {
+    0% {
+      transform: translate(0, 0) scale(1) rotate(0deg);
+      opacity: 1;
+    }
+    100% {
+      /* --dx, --dy で指定した方向へ移動しながら回転 */
+      transform: translate(var(--dx), var(--dy)) scale(0.5) rotate(360deg);
+      opacity: 0;
+    }
+  }
+ </style>
 </head>
 <body class="bg-gray-100 text-[#1a1a1a] dark:text-[#e0e0e0] mx-4 w-full dark:bg-gray-900">
   <!-- 固定ヘッダー -->

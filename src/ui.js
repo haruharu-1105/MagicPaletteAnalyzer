@@ -323,9 +323,17 @@
       colorDiv.title = `${hex} (${count}回)`;
       colorDiv.textContent = "";
       
-      colorDiv.addEventListener('click', () => {
+      colorDiv.addEventListener('click', (e) => {
         updateCurrentColor(color);
         addColorToHistory(color);
+        
+        // キャンバスそのものの位置を取得
+        const canvasRect = uiElements.canvas.getBoundingClientRect();
+        // キャンバス内での相対座標を計算（要素の中心に合わせるため、sparkleは幅10pxなので半分の5pxを引いています）
+        const relativeX = e.clientX - canvasRect.left;
+        const relativeY = e.clientY - canvasRect.top;
+        // キラキラエフェクトを表示
+        createSparkles(relativeX,  relativeY);
       });
       uiElements.paletteContainer.appendChild(colorDiv);
     });
@@ -341,7 +349,49 @@
     if (a === 0) return;
     const color = chroma(r, g, b);
     addColorToHistory(color);
+    
+    // キャンバスそのものの位置を取得
+    const canvasRect = uiElements.canvas.getBoundingClientRect();
+    // キャンバス内での相対座標を計算（要素の中心に合わせるため、sparkleは幅10pxなので半分の5pxを引いています）
+    const relativeX = e.clientX - canvasRect.left;
+    const relativeY = e.clientY - canvasRect.top;
+    // キラキラエフェクトを表示
+    createSparkles(relativeX, relativeY);
   });
+  
+  /**
+   * 指定位置から7つのキラキラ要素を生成し、それぞれ異なる方向に飛ばす関数
+   * @param {number} x - キラキラの発生位置（canvas-container 内の相対X座標）
+   * @param {number} y - キラキラの発生位置（canvas-container 内の相対Y座標）
+   */
+  function createSparkles(x, y) {
+    const sparkleCount = 7;
+    const distance = 60; // キラキラが飛ぶ距離（ピクセル）
+    
+    for (let i = 0; i < sparkleCount; i++) {
+      const sparkle = document.createElement('div');
+      sparkle.className = 'sparkle';
+      // 要素の中央を(x, y)に合わせるため、幅の半分（5px）を引く
+      sparkle.style.left = `${x - 5}px`;
+      sparkle.style.top = `${y - 5}px`;
+      
+      // 7方向に均等に飛ばす（角度を360°/7で割った値）
+      const angle = i * (360 / sparkleCount) * (Math.PI / 180);
+      const dx = distance * Math.cos(angle);
+      const dy = distance * Math.sin(angle);
+      // カスタムプロパティとして移動量をセット
+      sparkle.style.setProperty('--dx', `${dx}px`);
+      sparkle.style.setProperty('--dy', `${dy}px`);
+      
+      // キャンバスを含む親要素（#canvas-container）に追加
+      uiElements.canvasContainer.appendChild(sparkle);
+      
+      // アニメーション終了後に要素を自動削除
+      sparkle.addEventListener('animationend', () => {
+        sparkle.remove();
+      });
+    }
+  }
 
   /** 輝度が低ければ暗いと判断
   * @param {chroma} color - 色
