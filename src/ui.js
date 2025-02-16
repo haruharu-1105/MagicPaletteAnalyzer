@@ -35,7 +35,6 @@
   const App = {
     img: new Image(),
     isFrameScheduled: false, // 次のフレームで処理を実行中かどうか
-    isDragging: false, // ドラッグ中かどうか
     lastColor: null, // 最終選択色
   };
   const ctx = uiElements.canvas.getContext('2d', { willReadFrequently: true }); // Canvas の context を格納
@@ -57,25 +56,21 @@
           return;
         }
         
-        const color = chroma(r, g, b);
         // カーソル下の色で現在選択色を更新
-        updateCurrentColor(color);
+        updateCurrentColor(chroma(r, g, b));
       } finally {
         // フレーム実行後にフラグをリセット
         App.isFrameScheduled = false;
       } 
     });
   }
+  
   /**
   * 開始時のハンドラ（マウス、タッチどちらも）
   * @param {Event} e 
   */
   function onInteractionStart(e) {
-    e.preventDefault(); // デフォルト動作の抑制（タッチスクロールなどを防ぐ）
-    App.isDragging = true;
-    const ev = e.touches?.[0] || e;
-    throttledMouseMoveHandler(ev);
-    updateColorPreview(ev);
+    updateColorPreview(e);
   }
   
   /**
@@ -83,37 +78,15 @@
   * @param {Event} e 
   */
   function onInteractionMove(e) {
-    e.preventDefault();
-    const ev = e.touches?.[0] || e;
-    throttledMouseMoveHandler(ev);
-    
-    if (!App.isDragging) {
-      return;
+    throttledMouseMoveHandler(e);
+    if(e.buttons <= 0) { // https://developer.mozilla.org/ja/docs/Web/API/Pointer_events#%E3%83%9C%E3%82%BF%E3%83%B3%E3%81%AE%E7%8A%B6%E6%85%8B%E3%81%AE%E5%88%A4%E6%96%AD
+      return; // ドラッグ時以外
     }
-    updateColorPreview(ev);
+    updateColorPreview(e);
   }
   
-  /**
-  * 終了時のハンドラ（マウス、タッチどちらも）
-  * @param {Event} e 
-  */
-  function onInteractionEnd(e) {
-    e.preventDefault();
-    const ev = e.touches?.[0] || e;
-    throttledMouseMoveHandler(ev);
-    updateColorPreview(ev);
-    App.isDragging = false;
-  }
-  
-  // マウスイベントの登録
-  uiElements.canvas.addEventListener('mousedown', onInteractionStart);
-  uiElements.canvas.addEventListener('mousemove', onInteractionMove);
-  uiElements.canvas.addEventListener('mouseup', onInteractionEnd);
-  
-  // タッチイベントの登録
-  uiElements.canvas.addEventListener('touchstart', onInteractionStart);
-  uiElements.canvas.addEventListener('touchmove', onInteractionMove);
-  uiElements.canvas.addEventListener('touchend', onInteractionEnd);
+  uiElements.canvas.addEventListener('pointerdown', onInteractionStart);
+  uiElements.canvas.addEventListener('pointermove', onInteractionMove);
   
   /**
   * イベントオブジェクトからキャンバス上の座標を取得する関数
