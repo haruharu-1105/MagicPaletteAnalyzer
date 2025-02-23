@@ -2,6 +2,7 @@
 
   // UI 要素の管理オブジェクト
   const uiElements = {
+    version: document.getElementById('version'), // バージョン情報部
     themeToggleBtn: document.getElementById('theme-toggle'),
     fileInput: document.getElementById('file-input'), // 画像アップロードのファイル入力
     dropArea: document.getElementById('drop-area'),// ドラッグ＆ドロップ領域
@@ -30,75 +31,62 @@
       throw new Error(`UI element with id '${key}' is missing from the document.`);
     }
   });
-  
-  const ctx = uiElements.canvas.getContext('2d');
-  
-  // 最終選択色
-  let lastColor = null;
-  // 共通のフラグ（ドラッグ中かどうか）
-  let isDragging = false;
-  // フラグ変数：次のフレームで処理を実行中かどうかを管理します。
-  let isFrameScheduled = false;
+
+  const App = {
+    img: new Image(),
+    isFrameScheduled: false, // 次のフレームで処理を実行中かどうか
+    lastColor: null, // 最終選択色
+  };
+  const ctx = uiElements.canvas.getContext('2d', { willReadFrequently: true }); // Canvas の context を格納
   
   // スロットリングされたイベントハンドラ
   function throttledMouseMoveHandler(e) {
     // 既にフレームがスケジュール済みなら何もしない
-    if (isFrameScheduled){
+    if (App.isFrameScheduled){
       return;
     }
 
-    isFrameScheduled = true;
+    App.isFrameScheduled = true;
     requestAnimationFrame(() => {
       // カラー情報のプレビュー
-      updateColorPreview(e);
-
-      // フレーム実行後にフラグをリセット
-      isFrameScheduled = false;
+      const { x, y } = getCanvasCoordinates(e, uiElements.canvas);
+      const [r, g, b, a] = ctx.getImageData(x, y, 1, 1).data;
+      try {
+        if (a === 0) {
+          return;
+        }
+        
+        // カーソル下の色で現在選択色を更新
+        updateCurrentColor(chroma(r, g, b));
+      } finally {
+        // フレーム実行後にフラグをリセット
+        App.isFrameScheduled = false;
+      } 
     });
   }
+  
   /**
-  * 交互開始時のハンドラ（マウス、タッチどちらも）
+  * 開始時のハンドラ（マウス、タッチどちらも）
   * @param {Event} e 
   */
   function onInteractionStart(e) {
-    e.preventDefault(); // デフォルト動作の抑制（タッチスクロールなどを防ぐ）
-    isDragging = true;
-    throttledMouseMoveHandler(e);
+    updateColorPreview(e);
   }
   
   /**
-  * 移動時のハンドラ（マウス）
+  * 移動時のハンドラ（マウス、タッチどちらも）
   * @param {Event} e 
   */
   function onInteractionMove(e) {
-    e.preventDefault();
-    if (isDragging) {
-      throttledMouseMoveHandler(e);
+    throttledMouseMoveHandler(e);
+    if(e.buttons <= 0) { // https://developer.mozilla.org/ja/docs/Web/API/Pointer_events#%E3%83%9C%E3%82%BF%E3%83%B3%E3%81%AE%E7%8A%B6%E6%85%8B%E3%81%AE%E5%88%A4%E6%96%AD
+      return; // ドラッグ時以外
     }
+    updateColorPreview(e);
   }
   
-  /**
-  * 終了時のハンドラ（マウス、タッチどちらも）
-  * @param {Event} e 
-  */
-  function onInteractionEnd(e) {
-    e.preventDefault();
-    isDragging = false;
-  }
-  
-  // マウスイベントの登録
-  uiElements.canvas.addEventListener('mousedown', onInteractionStart);
-  uiElements.canvas.addEventListener('mousemove', onInteractionMove);
-  uiElements.canvas.addEventListener('mouseup', onInteractionEnd);
-  
-  // タッチイベントの登録
-  uiElements.canvas.addEventListener('touchstart', onInteractionStart);
-  uiElements.canvas.addEventListener('touchmove', (e) => {
-     e.preventDefault();
-     // タッチイベントの場合は最初のタッチ情報を使う
-     throttledMouseMoveHandler(e.touches[0]);
-  });
-  uiElements.canvas.addEventListener('touchend', onInteractionEnd);
+  uiElements.canvas.addEventListener('pointerdown', onInteractionStart);
+  uiElements.canvas.addEventListener('pointermove', onInteractionMove);
   
   /**
   * イベントオブジェクトからキャンバス上の座標を取得する関数
@@ -108,14 +96,8 @@
   */
   function getCanvasCoordinates(e, canvas) {
     const rect = canvas.getBoundingClientRect();
-    let clientX, clientY;
-    if (e.touches && e.touches.length) {
-      clientX = e.touches[0].clientX;
-      clientY = e.touches[0].clientY;
-    } else {
-      clientX = e.clientX;
-      clientY = e.clientY;
-    }
+    const clientX = e.touches?.[0]?.clientX ?? e.clientX;
+    const clientY = e.touches?.[0]?.clientY ?? e.clientY;
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
     return {
@@ -132,25 +114,31 @@
     const [r, g, b, a] = ctx.getImageData(x, y, 1, 1).data;
     if (a === 0) return;
     
-    const hex = ColorHelper.rgbToHex(r, g, b);
+    const color = chroma(r, g, b);
+    const hex = color.hex();
     
     // キャンバスコンテナの座標を取得
     const containerRect = uiElements.canvasContainer.getBoundingClientRect();
     
     // プレビューの更新（コンテナ内の座標に変換）
     uiElements.colorPreview.style.backgroundColor = hex;
-    uiElements.colorPreview.style.color = isDarkColor(hex) ? '#ffffff' : '#000000';
+    uiElements.colorPreview.style.color = isDarkColor(color) ? '#ffffff' : '#000000';
     uiElements.colorPreview.textContent = hex;
     // container内の相対位置に変換（プレビューサイズは80pxなので半分の40pxを引く）
     uiElements.colorPreview.style.left = `${e.clientX - containerRect.left - 40}px`;
     uiElements.colorPreview.style.top = `${e.clientY - containerRect.top - 40}px`;
     uiElements.colorPreview.style.display = 'flex';
+    
+    // カーソル下の色で現在選択色を更新
+    updateCurrentColor(color);
   };
   
-  /** ヘルパー関数：16進数から現在色表示を更新する
-  * @param {string} hex
+  /** 現在色表示を更新する
+  * @param {chroma} color - 色
   */
-  function updateCurrentColor(hex) {
+  function updateCurrentColor(color) {
+    const hex = color.hex();
+    
     uiElements.currentColorDisplay.style.background = hex;
     uiElements.colorHex.textContent = hex;
     
@@ -168,38 +156,40 @@
       uiElements.colorClosestName.textContent = currentColorClosestName;
     }
     
-    const currentColor = new ColorHelper(hex);
-    const [r, g, b] = currentColor.toRGB();
+    const [r, g, b] = color.rgb();
     uiElements.colorRgb.textContent = `${r}, ${g}, ${b}`;
-    const [h, s, v] = currentColor.toHsv();
-    uiElements.colorHsv.textContent = `${h}, ${s}, ${v}`;
-    //console.log(hex);
+    
+    let [h, s, v] = color.hsv();
+    // 1. グレースケールの場合（s が 0 または hue が NaN）の場合、色相を 0 に補正
+    if (isNaN(h) || s === 0) {
+      h = 0;
+    }
+    uiElements.colorHsv.textContent = `${Math.round(h)}, ${Math.round(s * 100)}, ${Math.round(v * 100)}`;
+    
+    //console.log(color);
   }
-  
-  let img = new Image();
   
   // 画像読み込み処理
   function loadImage(file) {
     const reader = new FileReader();
     reader.onload = function (e) {
       // 古い img の参照を解放
-      if (img) {
-        img.onload = null;   // イベントハンドラを解除
-        if (img.src && img.src.startsWith('blob:')) {
-          URL.revokeObjectURL(img.src);  // Blob URL を解放
+      if (App.img) {
+        App.img.onload = null;   // イベントハンドラを解除
+        if (App.img.src && App.img.src.startsWith('blob:')) {
+          URL.revokeObjectURL(App.img.src);  // Blob URL を解放
         }
-        img.src = "";         // 画像の参照を解除
-        img = null;           // 参照を完全に切り離す
+        App.img.src = "";         // 画像の参照を解除0
       }
-      img = new Image();
-      img.onload = function () {
+      App.img = new Image();
+      App.img.onload = function () {
         // キャンバスサイズを画像サイズに合わせる
-        uiElements.canvas.width = img.width;
-        uiElements.canvas.height = img.height;
-        ctx.drawImage(img, 0, 0);
+        uiElements.canvas.width = App.img.width;
+        uiElements.canvas.height = App.img.height;
+        ctx.drawImage(App.img, 0, 0);
         analyzeColors();
       }
-      img.src = e.target.result;
+      App.img.src = e.target.result;
     }
     reader.readAsDataURL(file);
   }
@@ -297,221 +287,218 @@
     // カラーパレット表示（横16個×縦4個のグリッド）
     sortedColors.forEach(([colorKey, count]) => {
       const [r, g, b] = colorKey.split(',').map(Number);
-      const hex = ColorHelper.rgbToHex(r, g, b);
+      const color = chroma(r, g, b);
+      const hex = color.hex();
+
       const colorDiv = document.createElement('div');
       colorDiv.className = 'color-box';
       colorDiv.style.background = hex;
       colorDiv.title = `${hex} (${count}回)`;
       colorDiv.textContent = "";
       
-      colorDiv.addEventListener('click', () => {
-        updateCurrentColor(hex);
-        addColorToHistory(hex);
+      colorDiv.addEventListener('click', (e) => {
+        updateCurrentColor(color);
+        addColorToHistory(color);
+        
+        // キャンバスそのものの位置を取得
+        const canvasRect = uiElements.canvas.getBoundingClientRect();
+        // キャンバス内での相対座標を計算（要素の中心に合わせるため、sparkleは幅10pxなので半分の5pxを引いています）
+        const relativeX = e.clientX - canvasRect.left;
+        const relativeY = e.clientY - canvasRect.top;
+        // キラキラエフェクトを表示
+        createSparkles(relativeX,  relativeY);
       });
       uiElements.paletteContainer.appendChild(colorDiv);
     });
     
     uiElements.downloadPaletteBtn.disabled = uiElements.paletteContainer.children.length === 0;
   }
-  
-  // マウス移動時にカーソル下の色を取得して表示
-  uiElements.canvas.addEventListener('mousemove', (e) => {
-    const { x, y } = getCanvasCoordinates(e, uiElements.canvas);
-    const pixel = ctx.getImageData(x, y, 1, 1).data;
-    const [r, g, b, a] = pixel;
-    if (a === 0) return;  // 透明な場合は無視
-    const hex = ColorHelper.rgbToHex(r, g, b);
-    updateCurrentColor(hex)
-  });
-  
+
   // クリック時に現在のカーソル色をカラーヒストリーに追加
   uiElements.canvas.addEventListener('click', (e) => {
     const { x, y } = getCanvasCoordinates(e, uiElements.canvas);
     const pixel = ctx.getImageData(x, y, 1, 1).data;
     const [r, g, b, a] = pixel;
     if (a === 0) return;
-    const hex = ColorHelper.rgbToHex(r, g, b);
-    addColorToHistory(hex);
+    const color = chroma(r, g, b);
+    addColorToHistory(color);
+    
+    // キャンバスそのものの位置を取得
+    const canvasRect = uiElements.canvas.getBoundingClientRect();
+    // キャンバス内での相対座標を計算（要素の中心に合わせるため、sparkleは幅10pxなので半分の5pxを引いています）
+    const relativeX = e.clientX - canvasRect.left;
+    const relativeY = e.clientY - canvasRect.top;
+    // キラキラエフェクトを表示
+    createSparkles(relativeX, relativeY);
   });
-  /** 明度判定のための関数（輝度計算）
-  * @param {string} hex
-  */
-  function isDarkColor(hex) {
-    // hex が "#RRGGBB" 形式の場合
-    const { r, g, b } = ColorHelper.hexToRgb(hex)
-    // 輝度の計算（ITU-R BT.601 係数を利用）
-    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-    return brightness < 128; // 輝度が低ければ暗いと判断
+  
+  /**
+   * 指定位置から7つのキラキラ要素を生成し、それぞれ異なる方向に飛ばす関数
+   * @param {number} x - キラキラの発生位置（canvas-container 内の相対X座標）
+   * @param {number} y - キラキラの発生位置（canvas-container 内の相対Y座標）
+   */
+  function createSparkles(x, y) {
+    const sparkleCount = 7;
+    const distance = 60; // キラキラが飛ぶ距離（ピクセル）
+    
+    for (let i = 0; i < sparkleCount; i++) {
+      const sparkle = document.createElement('div');
+      sparkle.className = 'sparkle';
+      // 要素の中央を(x, y)に合わせるため、幅の半分（5px）を引く
+      sparkle.style.left = `${x - 5}px`;
+      sparkle.style.top = `${y - 5}px`;
+      
+      // 7方向に均等に飛ばす（角度を360°/7で割った値）
+      const angle = i * (360 / sparkleCount) * (Math.PI / 180);
+      const dx = distance * Math.cos(angle);
+      const dy = distance * Math.sin(angle);
+      // カスタムプロパティとして移動量をセット
+      sparkle.style.setProperty('--dx', `${dx}px`);
+      sparkle.style.setProperty('--dy', `${dy}px`);
+      
+      // キャンバスを含む親要素（#canvas-container）に追加
+      uiElements.canvasContainer.appendChild(sparkle);
+      
+      // アニメーション終了後に要素を自動削除
+      sparkle.addEventListener('animationend', () => {
+        sparkle.remove();
+      });
+    }
   }
-  /** カラーヒストリーに色を追加する関数
-  * @param {string} hex
+
+  /** 輝度が低ければ暗いと判断
+  * @param {chroma} color - 色
+  * @returns {boolean} - 色が暗い場合にtrue、明るい場合にfalseを返す
   */
-  function addColorToHistory(hex) {
-    if (hex === lastColor) {
+  function isDarkColor(color) {
+    const luminance = color.luminance();
+    // 輝度が0.5未満なら暗い色、0.5以上なら明るい色
+    return luminance < 0.5;
+  }
+
+  /** カラーヒストリーに色を追加する関数
+  * @param {chroma} color - 色
+  */
+  function addColorToHistory(color) {
+    const hex = color.hex();
+    if (hex === App.lastColor) {
       uiElements.errorMessage.textContent = "直前の色と同じため追加できません。";
       return;
     }
     uiElements.errorMessage.textContent = "";  // エラー解除
-    lastColor = hex;
+    App.lastColor = hex;
     
     const colorDiv = document.createElement('div');
     colorDiv.className = 'color-box';
     colorDiv.style.background = hex;
-    colorDiv.style.color = isDarkColor(hex) ? "#ffffff" : "#000000";
+    colorDiv.style.color = isDarkColor(color) ? "#ffffff" : "#000000";
     colorDiv.title = hex;
     colorDiv.textContent = hex;
     uiElements.historyContainer.prepend(colorDiv);
     // ヒストリーに項目が追加されたので、ダウンロードボタンを有効化
     uiElements.downloadHistoryBtn.disabled = uiElements.historyContainer.children.length === 0;
-  }
-  
-    /**
-    * 指定のコンテナ内の各カラーボックスをキャンバスに描画する共通関数
-    * @param {CanvasRenderingContext2D} ctx - 描画先のキャンバスコンテキスト
-    * @param {HTMLElement} container - カラーボックスが含まれるコンテナ（例：historyContainer や paletteContainer）
-    * @param {number} itemSize - 各色ボックスのサイズ（ピクセル）
-    * @param {number} columns - 1行あたりのボックス数
-    * @param {number} offsetY - キャンバス上に描画する際の縦方向のオフセット
-    */
-    function drawColorBoxes(ctx, container, itemSize, columns, offsetY) {
-      const items = container.querySelectorAll('.color-box');
-      items.forEach((item, index) => {
-        const col = index % columns;
-        const row = Math.floor(index / columns);
-        // title 属性に hex が入っている前提（もしくは style.backgroundColor）
-        const hex = item.title || item.style.backgroundColor;
-        ctx.fillStyle = hex;
-        ctx.fillRect(col * itemSize, offsetY + row * itemSize, itemSize, itemSize);
-        // 境界線の描画
-        ctx.strokeStyle = "#000";
-        ctx.strokeRect(col * itemSize, offsetY + row * itemSize, itemSize, itemSize);
-      });
-    }
+  }  
   
   // ヒストリー画像ダウンロード処理
   uiElements.downloadHistoryBtn.addEventListener('click', () => {
     // ヒストリー内の色ボックスをまとめたキャンバスを作成
-    const historyItems = uiElements.historyContainer.querySelectorAll('.color-box');
-    if (historyItems.length === 0) {
+    const colorDivs = uiElements.historyContainer.querySelectorAll('.color-box');
+    if (colorDivs.length === 0) {
       alert("ヒストリーに色がありません。");
       return;
     }
+    const downloadCanvas = document.createElement('canvas');
+    const downloadCtx = downloadCanvas.getContext('2d');
     // 選択されたオプションを取得
     const selectedOption = document.querySelector('input[name="history-download-option"]:checked').value;
-    if (selectedOption === "include") {
-      // 元画像付きでダウンロード
-      const downloadCanvas = document.createElement('canvas');
-      // キャンバスの高さは元画像とヒストリー領域の高さを合わせる
-      downloadCanvas.width = uiElements.canvas.width;
-      downloadCanvas.height = uiElements.canvas.height + uiElements.historyContainer.offsetHeight + 20;
-      const downloadCtx = downloadCanvas.getContext('2d');
+    const includeImage = selectedOption === "include";
+    const { width, height } = calculateCanvasSize(colorDivs.length, includeImage);
+    downloadCanvas.width = width;
+    downloadCanvas.height = height;
+    if (includeImage) {
+      // 元画像の下にカラーパレット情報を追加してダウンロード
+      downloadCtx.drawImage(App.img, 0, 0); // 元画像をキャンバスに描画
       
-      // 元画像を描画
-      downloadCtx.drawImage(img, 0, 0);
+      const yOffset = uiElements.canvas.height + 10;
+      drawColorBoxes(downloadCtx, colorDivs, yOffset);
       
-      // ヒストリーの色ボックスを元画像の下に描画
-      const itemSize = 40;  // 各色ボックスのサイズ
-      let yOffset = uiElements.canvas.height + 10;
-      historyItems.forEach((item, index) => {
-        const col = index % 10;
-        const row = Math.floor(index / 10);
-        downloadCtx.fillStyle = item.title;  // title 属性に hex 値を設定している
-        downloadCtx.fillRect(col * itemSize, yOffset + row * itemSize, itemSize, itemSize);
-        // 境界線描画
-        downloadCtx.strokeStyle = "#000";
-        downloadCtx.strokeRect(col * itemSize, yOffset + row * itemSize, itemSize, itemSize);
-      });
-      
-      const dataURL = downloadCanvas.toDataURL("image/png");
-      const a = document.createElement('a');
-      const now = new Date().toISOString();
-      a.download = `color_history_with_image_${now}.png`;
-      a.href = dataURL;
-      a.click();
-      
+      triggerDownload(downloadCanvas, "color_history_with_image_");
     } else {
       // ヒストリー情報のみでダウンロード
-      const downloadCanvas = document.createElement('canvas');
-      downloadCanvas.width = uiElements.historyContainer.offsetWidth;
-      downloadCanvas.height = uiElements.historyContainer.offsetHeight;
-      const downloadCtx = downloadCanvas.getContext('2d');
+      drawColorBoxes(downloadCtx, colorDivs);
       
-      const itemSize = 40;
-      historyItems.forEach((item, index) => {
-        const col = index % 10;
-        const row = Math.floor(index / 10);
-        downloadCtx.fillStyle = item.title;
-        downloadCtx.fillRect(col * itemSize, row * itemSize, itemSize, itemSize);
-      });
-      
-      const dataURL = downloadCanvas.toDataURL("image/png");
-      const a = document.createElement('a');
-      const now = new Date().toISOString();
-      a.download = `color_history_only_${now}.png`;
-      a.href = dataURL;
-      a.click();
+      triggerDownload(downloadCanvas, "color_history_only_");
     }
   });
   
     // パレットダウンロード処理
   uiElements.downloadPaletteBtn.addEventListener('click', () => {
     const selectedOption = document.querySelector('input[name="download-option"]:checked').value;
+    const colorDivs = uiElements.paletteContainer.querySelectorAll('.color-box');
+    const downloadCanvas = document.createElement('canvas');
+    const downloadCtx = downloadCanvas.getContext('2d');
     
-    if (selectedOption === "include") {
+    const includeImage = selectedOption === "include";
+    const { width, height } = calculateCanvasSize(colorDivs.length, includeImage);
+    downloadCanvas.width = width;
+    downloadCanvas.height = height;
+    if (includeImage) {
       // 元画像の下にカラーパレット情報を追加してダウンロード
-      const downloadCanvas = document.createElement('canvas');
-      downloadCanvas.width = uiElements.canvas.width;
-      downloadCanvas.height = uiElements.canvas.height + uiElements.paletteContainer.offsetHeight + 20;
-      const downloadCtx = downloadCanvas.getContext('2d');
+      downloadCtx.drawImage(App.img, 0, 0); // 元画像をキャンバスに描画
       
-      // 元画像をキャンバスに描画
-      downloadCtx.drawImage(img, 0, 0);
+      const yOffset = uiElements.canvas.height + 10;
+      drawColorBoxes(downloadCtx, colorDivs, yOffset);
       
-      // カラーパレット情報を描画
-      let yOffset = uiElements.canvas.height + 10;
-      const colorDivs = uiElements.paletteContainer.querySelectorAll('.color-box');
-      colorDivs.forEach((colorDiv, index) => {
-        const hex = colorDiv.style.backgroundColor;
-        downloadCtx.fillStyle = hex;
-        downloadCtx.fillRect(index % 16 * 40, yOffset + Math.floor(index / 16) * 40, 40, 40);
-      });
-      
-      // ダウンロード
-      const dataURL = downloadCanvas.toDataURL('image/png');
-      const a = document.createElement('a');
-      const now = new Date().toISOString();
-      a.download = `image_with_palette_${now}.png`;
-      a.href = dataURL;
-      a.click();
+      triggerDownload(downloadCanvas, "image_with_palette_");
     } else {
       // カラーパレット情報のみダウンロード
-      const downloadCanvas = document.createElement('canvas');
-      downloadCanvas.width = uiElements.paletteContainer.offsetWidth;
-      downloadCanvas.height = uiElements.paletteContainer.offsetHeight;
-      const downloadCtx = downloadCanvas.getContext('2d');
+      drawColorBoxes(downloadCtx, colorDivs);
       
-      // カラーパレット情報を描画
-      const colorDivs = uiElements.paletteContainer.querySelectorAll('.color-box');
-      colorDivs.forEach((colorDiv, index) => {
-        const hex = colorDiv.style.backgroundColor;
-        downloadCtx.fillStyle = hex;
-        downloadCtx.fillRect(index % 16 * 40, Math.floor(index / 16) * 40, 40, 40);
-      });
-      
-      // ダウンロード
-      const dataURL = downloadCanvas.toDataURL('image/png');
-      const a = document.createElement('a');
-      const now = new Date().toISOString();
-      a.download = `palette_only_${now}.png`;
-      a.href = dataURL;
-      a.click();
+      triggerDownload(downloadCanvas, "palette_only_");
     }
   });
+  const maxCols = 16; // 最大16列
+  const itemSize = 40; // 各ボックスのサイズ
+
+  // キャンバスサイズを事前計算する関数
+  const calculateCanvasSize = (totalItems, includeImage) => {
+    const numCols = Math.min(totalItems, maxCols); // 最大16列
+    const numRows = Math.ceil(totalItems / maxCols); // 必要な行数
+    
+    const width = numCols * itemSize;
+    const height = numRows * itemSize;
+    
+    return {
+      width: includeImage ? Math.max(uiElements.canvas.width, width) : width, // キャンバスサイズよりパレット数が多い場合は計算値を使用
+      height: includeImage ? uiElements.canvas.height + height + 20 : height
+    };
+  };
+
+  const drawColorBoxes = (ctx, colorDivs, yOffset = 0) => {
+    colorDivs.forEach((colorDiv, index) => {
+      ctx.fillStyle = colorDiv.style.backgroundColor;
+      ctx.fillRect((index % maxCols) * itemSize, yOffset + Math.floor(index / maxCols) * itemSize, itemSize, itemSize);
+    });
+  };
   
-    /**
-    * 一番上にスクロール機能
-    */
-    // スクロールイベントで「一番上にスクロール」ボタンの表示切替
+  // ダウンロード
+  const triggerDownload = (canvas, filePrefix = "download") => {
+    if (!canvas) {
+      console.error("Canvas is not provided.");
+      return;
+    }
+    
+    const dataURL = canvas.toDataURL("image/png");
+    const a = document.createElement("a");
+    a.download = `${filePrefix}_${new Date().toISOString()}.png`;
+    a.href = dataURL;
+    a.click();
+  };
+  
+  /**
+   * 一番上にスクロール機能
+  */
+  // スクロールイベントで「一番上にスクロール」ボタンの表示切替
   window.addEventListener('scroll', () => {
     // ヘッダーの高さ（この例では約80px）
     const headerHeight = 80;

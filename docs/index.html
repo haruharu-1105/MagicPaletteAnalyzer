@@ -2,10 +2,11 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>✨MagicPaletteAnalyzer - 画像から色を召喚する魔導具 ver 0.0.4</title>
+  <title>✨MagicPaletteAnalyzer - 画像から色を召喚する魔導具 ver 0.0.5</title>
   <meta name="viewport" content="initial-scale=1.0,width=device-width,viewport-fit=cover">
   <meta name="description"
   content="MagicPaletteAnalyzer - 画像に宿る色の精霊を可視化するカラーパレット生成ツール。瞳の色から風景まで、あらゆる画像を16色の魔方陣へ変換。術師のための色彩錬金術ツール。">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chroma-js/2.4.2/chroma.min.js"></script>
   <!-- Tailwind CSS CDN（簡易的な利用例） -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- TailwindCSSでdark modeを有効にするための設定例 -->
@@ -38,7 +39,30 @@
       pointer-events: none;
       transition: transform 0.1s ease-out;
     }
-  </style>
+  .sparkle {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: radial-gradient(circle, #fff, rgba(255,255,255,0));
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 50;
+    transform: translate(0, 0);
+    opacity: 1;
+    animation: sparkleAnim 600ms ease-out forwards;
+  }
+  @keyframes sparkleAnim {
+    0% {
+      transform: translate(0, 0) scale(1) rotate(0deg);
+      opacity: 1;
+    }
+    100% {
+      /* --dx, --dy で指定した方向へ移動しながら回転 */
+      transform: translate(var(--dx), var(--dy)) scale(0.5) rotate(360deg);
+      opacity: 0;
+    }
+  }
+ </style>
 </head>
 <body class="bg-gray-100 text-[#1a1a1a] dark:text-[#e0e0e0] mx-4 w-full dark:bg-gray-900">
   <!-- 固定ヘッダー -->
@@ -49,7 +73,7 @@
         <!-- タイトル -->
         <h1 class="text-2xl font-bold">MagicPaletteAnalyzer<span class="hidden md:inline">✨🎨🔍</span></h1>
         <!-- バージョン -->
-        <span class="text-sm text-gray-500 dark:text-white-500">ver 0.0.4</span>
+        <span id="version" class="text-sm">ver 0.0.5</span>
       </div>
       <div class="flex items-center gap-4">
         <!-- 使用方法（アコーディオン） -->
@@ -196,119 +220,12 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
 </div>
   <!-- インライン JavaScript -->
   <script>
-    // src/color-helper.js
-
-  // ------------------------------------------------
-  // ColorHelper クラス（色変換・情報取得用のユーティリティクラス）
-  // ------------------------------------------------
-  class ColorHelper {
-    /**
-    * コンストラクタ  
-    * input: 文字列（"#RRGGBB"形式など）または {r, g, b} オブジェクト
-    */
-    constructor(input) {
-      if (typeof input === 'string') {
-        this.rgb = ColorHelper.hexToRgb(input);
-      } else if (typeof input === 'object' && input.r !== undefined) {
-        this.rgb = { r: input.r, g: input.g, b: input.b };
-      } else {
-        throw new Error("Invalid color input");
-      }
-    }
-    
-    /**
-    * 16進数文字列から RGB オブジェクトへ変換する静的メソッド
-    * @param {string} hex - "#RRGGBB" 形式の文字列
-    * @returns {object} {r, g, b}
-    */
-    static hexToRgb(hex) {
-      hex = hex.replace('#', '');
-      if (hex.length === 3) {
-        hex = hex.split('').map(ch => ch + ch).join('');
-      }
-      const bigint = parseInt(hex, 16);
-      const r = (bigint >> 16) & 255;
-      const g = (bigint >> 8) & 255;
-      const b = bigint & 255;
-      return { r, g, b };
-    }
-    
-    /**
-    * RGBから16進数表記に変換する静的メソッド
-    * @param {number} r 
-    * @param {number} g 
-    * @param {number} b 
-    * @returns {string} "#RRGGBB" 形式の文字列
-    */
-    static rgbToHex(r, g, b) {
-      return "#" + [r, g, b].map(c => c.toString(16).padStart(2, '0')).join('');
-    }
-    
-    /**
-    * インスタンスの RGB 値から 16進数表記に変換する
-    * @returns {string} "#RRGGBB" 形式の文字列
-    */
-    toHex() {
-      return ColorHelper.rgbToHex(this.rgb.r, this.rgb.g, this.rgb.b);
-    }
-    
-    /**
-    * RGB値から HSV 値へ変換する静的メソッド  
-    * @param {number} r 
-    * @param {number} g 
-    * @param {number} b 
-    * @returns {Array} [h, s, v]（h: 0～360, s,v: 0～100）
-    */
-    static rgbToHsv(r, g, b) {
-      r /= 255; g /= 255; b /= 255;
-      const max = Math.max(r, g, b);
-      const min = Math.min(r, g, b);
-      let h, s, v = max;
-      const d = max - min;
-      s = max === 0 ? 0 : d / max;
-      if (max === min) {
-        h = 0;
-      } else {
-        switch (max) {
-          case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-          case g: h = (b - r) / d + 2; break;
-          case b: h = (r - g) / d + 4; break;
-        }
-        h /= 6;
-      }
-      return [Math.round(h * 360), Math.round(s * 100), Math.round(v * 100)];
-    }
-    
-    /**
-    * インスタンスの RGB 値から HSV 値へ変換する
-    * @returns {Array} [h, s, v]（h: 0～360, s,v: 0～100）
-    */
-    toHsv() {
-      return ColorHelper.rgbToHsv(this.rgb.r, this.rgb.g, this.rgb.b);
-    }
-    /**
-    * インスタンスの RGB 値から RGB オブジェクトへ変換する
-    * @returns {Array} [r, g, b]
-    */
-    toRGB() {
-      return [this.rgb.r, this.rgb.g, this.rgb.b];
-    }
-    
-    /**
-    * ファクトリーメソッド：RGB値からインスタンス生成
-    * @param {number} r
-    * @param {number} g
-    * @param {number} b
-    * @returns {ColorHelper}
-    */
-    static fromRgb(r, g, b) {
-      return new ColorHelper({ r, g, b });
-    }
-  }
-// src/ui.js
+    "use strict";
+    // src/ui.js
 
   // UI 要素の管理オブジェクト
   const uiElements = {
+    version: document.getElementById('version'), // バージョン情報部
     themeToggleBtn: document.getElementById('theme-toggle'),
     fileInput: document.getElementById('file-input'), // 画像アップロードのファイル入力
     dropArea: document.getElementById('drop-area'),// ドラッグ＆ドロップ領域
@@ -337,75 +254,62 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
       throw new Error(`UI element with id '${key}' is missing from the document.`);
     }
   });
-  
-  const ctx = uiElements.canvas.getContext('2d');
-  
-  // 最終選択色
-  let lastColor = null;
-  // 共通のフラグ（ドラッグ中かどうか）
-  let isDragging = false;
-  // フラグ変数：次のフレームで処理を実行中かどうかを管理します。
-  let isFrameScheduled = false;
+
+  const App = {
+    img: new Image(),
+    isFrameScheduled: false, // 次のフレームで処理を実行中かどうか
+    lastColor: null, // 最終選択色
+  };
+  const ctx = uiElements.canvas.getContext('2d', { willReadFrequently: true }); // Canvas の context を格納
   
   // スロットリングされたイベントハンドラ
   function throttledMouseMoveHandler(e) {
     // 既にフレームがスケジュール済みなら何もしない
-    if (isFrameScheduled){
+    if (App.isFrameScheduled){
       return;
     }
 
-    isFrameScheduled = true;
+    App.isFrameScheduled = true;
     requestAnimationFrame(() => {
       // カラー情報のプレビュー
-      updateColorPreview(e);
-
-      // フレーム実行後にフラグをリセット
-      isFrameScheduled = false;
+      const { x, y } = getCanvasCoordinates(e, uiElements.canvas);
+      const [r, g, b, a] = ctx.getImageData(x, y, 1, 1).data;
+      try {
+        if (a === 0) {
+          return;
+        }
+        
+        // カーソル下の色で現在選択色を更新
+        updateCurrentColor(chroma(r, g, b));
+      } finally {
+        // フレーム実行後にフラグをリセット
+        App.isFrameScheduled = false;
+      } 
     });
   }
+  
   /**
-  * 交互開始時のハンドラ（マウス、タッチどちらも）
+  * 開始時のハンドラ（マウス、タッチどちらも）
   * @param {Event} e 
   */
   function onInteractionStart(e) {
-    e.preventDefault(); // デフォルト動作の抑制（タッチスクロールなどを防ぐ）
-    isDragging = true;
-    throttledMouseMoveHandler(e);
+    updateColorPreview(e);
   }
   
   /**
-  * 移動時のハンドラ（マウス）
+  * 移動時のハンドラ（マウス、タッチどちらも）
   * @param {Event} e 
   */
   function onInteractionMove(e) {
-    e.preventDefault();
-    if (isDragging) {
-      throttledMouseMoveHandler(e);
+    throttledMouseMoveHandler(e);
+    if(e.buttons <= 0) { // https://developer.mozilla.org/ja/docs/Web/API/Pointer_events#%E3%83%9C%E3%82%BF%E3%83%B3%E3%81%AE%E7%8A%B6%E6%85%8B%E3%81%AE%E5%88%A4%E6%96%AD
+      return; // ドラッグ時以外
     }
+    updateColorPreview(e);
   }
   
-  /**
-  * 終了時のハンドラ（マウス、タッチどちらも）
-  * @param {Event} e 
-  */
-  function onInteractionEnd(e) {
-    e.preventDefault();
-    isDragging = false;
-  }
-  
-  // マウスイベントの登録
-  uiElements.canvas.addEventListener('mousedown', onInteractionStart);
-  uiElements.canvas.addEventListener('mousemove', onInteractionMove);
-  uiElements.canvas.addEventListener('mouseup', onInteractionEnd);
-  
-  // タッチイベントの登録
-  uiElements.canvas.addEventListener('touchstart', onInteractionStart);
-  uiElements.canvas.addEventListener('touchmove', (e) => {
-     e.preventDefault();
-     // タッチイベントの場合は最初のタッチ情報を使う
-     throttledMouseMoveHandler(e.touches[0]);
-  });
-  uiElements.canvas.addEventListener('touchend', onInteractionEnd);
+  uiElements.canvas.addEventListener('pointerdown', onInteractionStart);
+  uiElements.canvas.addEventListener('pointermove', onInteractionMove);
   
   /**
   * イベントオブジェクトからキャンバス上の座標を取得する関数
@@ -415,14 +319,8 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
   */
   function getCanvasCoordinates(e, canvas) {
     const rect = canvas.getBoundingClientRect();
-    let clientX, clientY;
-    if (e.touches && e.touches.length) {
-      clientX = e.touches[0].clientX;
-      clientY = e.touches[0].clientY;
-    } else {
-      clientX = e.clientX;
-      clientY = e.clientY;
-    }
+    const clientX = e.touches?.[0]?.clientX ?? e.clientX;
+    const clientY = e.touches?.[0]?.clientY ?? e.clientY;
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
     return {
@@ -439,25 +337,31 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
     const [r, g, b, a] = ctx.getImageData(x, y, 1, 1).data;
     if (a === 0) return;
     
-    const hex = ColorHelper.rgbToHex(r, g, b);
+    const color = chroma(r, g, b);
+    const hex = color.hex();
     
     // キャンバスコンテナの座標を取得
     const containerRect = uiElements.canvasContainer.getBoundingClientRect();
     
     // プレビューの更新（コンテナ内の座標に変換）
     uiElements.colorPreview.style.backgroundColor = hex;
-    uiElements.colorPreview.style.color = isDarkColor(hex) ? '#ffffff' : '#000000';
+    uiElements.colorPreview.style.color = isDarkColor(color) ? '#ffffff' : '#000000';
     uiElements.colorPreview.textContent = hex;
     // container内の相対位置に変換（プレビューサイズは80pxなので半分の40pxを引く）
     uiElements.colorPreview.style.left = `${e.clientX - containerRect.left - 40}px`;
     uiElements.colorPreview.style.top = `${e.clientY - containerRect.top - 40}px`;
     uiElements.colorPreview.style.display = 'flex';
+    
+    // カーソル下の色で現在選択色を更新
+    updateCurrentColor(color);
   };
   
-  /** ヘルパー関数：16進数から現在色表示を更新する
-  * @param {string} hex
+  /** 現在色表示を更新する
+  * @param {chroma} color - 色
   */
-  function updateCurrentColor(hex) {
+  function updateCurrentColor(color) {
+    const hex = color.hex();
+    
     uiElements.currentColorDisplay.style.background = hex;
     uiElements.colorHex.textContent = hex;
     
@@ -475,38 +379,40 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
       uiElements.colorClosestName.textContent = currentColorClosestName;
     }
     
-    const currentColor = new ColorHelper(hex);
-    const [r, g, b] = currentColor.toRGB();
+    const [r, g, b] = color.rgb();
     uiElements.colorRgb.textContent = `${r}, ${g}, ${b}`;
-    const [h, s, v] = currentColor.toHsv();
-    uiElements.colorHsv.textContent = `${h}, ${s}, ${v}`;
-    //console.log(hex);
+    
+    let [h, s, v] = color.hsv();
+    // 1. グレースケールの場合（s が 0 または hue が NaN）の場合、色相を 0 に補正
+    if (isNaN(h) || s === 0) {
+      h = 0;
+    }
+    uiElements.colorHsv.textContent = `${Math.round(h)}, ${Math.round(s * 100)}, ${Math.round(v * 100)}`;
+    
+    //console.log(color);
   }
-  
-  let img = new Image();
   
   // 画像読み込み処理
   function loadImage(file) {
     const reader = new FileReader();
     reader.onload = function (e) {
       // 古い img の参照を解放
-      if (img) {
-        img.onload = null;   // イベントハンドラを解除
-        if (img.src && img.src.startsWith('blob:')) {
-          URL.revokeObjectURL(img.src);  // Blob URL を解放
+      if (App.img) {
+        App.img.onload = null;   // イベントハンドラを解除
+        if (App.img.src && App.img.src.startsWith('blob:')) {
+          URL.revokeObjectURL(App.img.src);  // Blob URL を解放
         }
-        img.src = "";         // 画像の参照を解除
-        img = null;           // 参照を完全に切り離す
+        App.img.src = "";         // 画像の参照を解除0
       }
-      img = new Image();
-      img.onload = function () {
+      App.img = new Image();
+      App.img.onload = function () {
         // キャンバスサイズを画像サイズに合わせる
-        uiElements.canvas.width = img.width;
-        uiElements.canvas.height = img.height;
-        ctx.drawImage(img, 0, 0);
+        uiElements.canvas.width = App.img.width;
+        uiElements.canvas.height = App.img.height;
+        ctx.drawImage(App.img, 0, 0);
         analyzeColors();
       }
-      img.src = e.target.result;
+      App.img.src = e.target.result;
     }
     reader.readAsDataURL(file);
   }
@@ -604,221 +510,218 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
     // カラーパレット表示（横16個×縦4個のグリッド）
     sortedColors.forEach(([colorKey, count]) => {
       const [r, g, b] = colorKey.split(',').map(Number);
-      const hex = ColorHelper.rgbToHex(r, g, b);
+      const color = chroma(r, g, b);
+      const hex = color.hex();
+
       const colorDiv = document.createElement('div');
       colorDiv.className = 'color-box';
       colorDiv.style.background = hex;
       colorDiv.title = `${hex} (${count}回)`;
       colorDiv.textContent = "";
       
-      colorDiv.addEventListener('click', () => {
-        updateCurrentColor(hex);
-        addColorToHistory(hex);
+      colorDiv.addEventListener('click', (e) => {
+        updateCurrentColor(color);
+        addColorToHistory(color);
+        
+        // キャンバスそのものの位置を取得
+        const canvasRect = uiElements.canvas.getBoundingClientRect();
+        // キャンバス内での相対座標を計算（要素の中心に合わせるため、sparkleは幅10pxなので半分の5pxを引いています）
+        const relativeX = e.clientX - canvasRect.left;
+        const relativeY = e.clientY - canvasRect.top;
+        // キラキラエフェクトを表示
+        createSparkles(relativeX,  relativeY);
       });
       uiElements.paletteContainer.appendChild(colorDiv);
     });
     
     uiElements.downloadPaletteBtn.disabled = uiElements.paletteContainer.children.length === 0;
   }
-  
-  // マウス移動時にカーソル下の色を取得して表示
-  uiElements.canvas.addEventListener('mousemove', (e) => {
-    const { x, y } = getCanvasCoordinates(e, uiElements.canvas);
-    const pixel = ctx.getImageData(x, y, 1, 1).data;
-    const [r, g, b, a] = pixel;
-    if (a === 0) return;  // 透明な場合は無視
-    const hex = ColorHelper.rgbToHex(r, g, b);
-    updateCurrentColor(hex)
-  });
-  
+
   // クリック時に現在のカーソル色をカラーヒストリーに追加
   uiElements.canvas.addEventListener('click', (e) => {
     const { x, y } = getCanvasCoordinates(e, uiElements.canvas);
     const pixel = ctx.getImageData(x, y, 1, 1).data;
     const [r, g, b, a] = pixel;
     if (a === 0) return;
-    const hex = ColorHelper.rgbToHex(r, g, b);
-    addColorToHistory(hex);
+    const color = chroma(r, g, b);
+    addColorToHistory(color);
+    
+    // キャンバスそのものの位置を取得
+    const canvasRect = uiElements.canvas.getBoundingClientRect();
+    // キャンバス内での相対座標を計算（要素の中心に合わせるため、sparkleは幅10pxなので半分の5pxを引いています）
+    const relativeX = e.clientX - canvasRect.left;
+    const relativeY = e.clientY - canvasRect.top;
+    // キラキラエフェクトを表示
+    createSparkles(relativeX, relativeY);
   });
-  /** 明度判定のための関数（輝度計算）
-  * @param {string} hex
-  */
-  function isDarkColor(hex) {
-    // hex が "#RRGGBB" 形式の場合
-    const { r, g, b } = ColorHelper.hexToRgb(hex)
-    // 輝度の計算（ITU-R BT.601 係数を利用）
-    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-    return brightness < 128; // 輝度が低ければ暗いと判断
+  
+  /**
+   * 指定位置から7つのキラキラ要素を生成し、それぞれ異なる方向に飛ばす関数
+   * @param {number} x - キラキラの発生位置（canvas-container 内の相対X座標）
+   * @param {number} y - キラキラの発生位置（canvas-container 内の相対Y座標）
+   */
+  function createSparkles(x, y) {
+    const sparkleCount = 7;
+    const distance = 60; // キラキラが飛ぶ距離（ピクセル）
+    
+    for (let i = 0; i < sparkleCount; i++) {
+      const sparkle = document.createElement('div');
+      sparkle.className = 'sparkle';
+      // 要素の中央を(x, y)に合わせるため、幅の半分（5px）を引く
+      sparkle.style.left = `${x - 5}px`;
+      sparkle.style.top = `${y - 5}px`;
+      
+      // 7方向に均等に飛ばす（角度を360°/7で割った値）
+      const angle = i * (360 / sparkleCount) * (Math.PI / 180);
+      const dx = distance * Math.cos(angle);
+      const dy = distance * Math.sin(angle);
+      // カスタムプロパティとして移動量をセット
+      sparkle.style.setProperty('--dx', `${dx}px`);
+      sparkle.style.setProperty('--dy', `${dy}px`);
+      
+      // キャンバスを含む親要素（#canvas-container）に追加
+      uiElements.canvasContainer.appendChild(sparkle);
+      
+      // アニメーション終了後に要素を自動削除
+      sparkle.addEventListener('animationend', () => {
+        sparkle.remove();
+      });
+    }
   }
-  /** カラーヒストリーに色を追加する関数
-  * @param {string} hex
+
+  /** 輝度が低ければ暗いと判断
+  * @param {chroma} color - 色
+  * @returns {boolean} - 色が暗い場合にtrue、明るい場合にfalseを返す
   */
-  function addColorToHistory(hex) {
-    if (hex === lastColor) {
+  function isDarkColor(color) {
+    const luminance = color.luminance();
+    // 輝度が0.5未満なら暗い色、0.5以上なら明るい色
+    return luminance < 0.5;
+  }
+
+  /** カラーヒストリーに色を追加する関数
+  * @param {chroma} color - 色
+  */
+  function addColorToHistory(color) {
+    const hex = color.hex();
+    if (hex === App.lastColor) {
       uiElements.errorMessage.textContent = "直前の色と同じため追加できません。";
       return;
     }
     uiElements.errorMessage.textContent = "";  // エラー解除
-    lastColor = hex;
+    App.lastColor = hex;
     
     const colorDiv = document.createElement('div');
     colorDiv.className = 'color-box';
     colorDiv.style.background = hex;
-    colorDiv.style.color = isDarkColor(hex) ? "#ffffff" : "#000000";
+    colorDiv.style.color = isDarkColor(color) ? "#ffffff" : "#000000";
     colorDiv.title = hex;
     colorDiv.textContent = hex;
     uiElements.historyContainer.prepend(colorDiv);
     // ヒストリーに項目が追加されたので、ダウンロードボタンを有効化
     uiElements.downloadHistoryBtn.disabled = uiElements.historyContainer.children.length === 0;
-  }
-  
-    /**
-    * 指定のコンテナ内の各カラーボックスをキャンバスに描画する共通関数
-    * @param {CanvasRenderingContext2D} ctx - 描画先のキャンバスコンテキスト
-    * @param {HTMLElement} container - カラーボックスが含まれるコンテナ（例：historyContainer や paletteContainer）
-    * @param {number} itemSize - 各色ボックスのサイズ（ピクセル）
-    * @param {number} columns - 1行あたりのボックス数
-    * @param {number} offsetY - キャンバス上に描画する際の縦方向のオフセット
-    */
-    function drawColorBoxes(ctx, container, itemSize, columns, offsetY) {
-      const items = container.querySelectorAll('.color-box');
-      items.forEach((item, index) => {
-        const col = index % columns;
-        const row = Math.floor(index / columns);
-        // title 属性に hex が入っている前提（もしくは style.backgroundColor）
-        const hex = item.title || item.style.backgroundColor;
-        ctx.fillStyle = hex;
-        ctx.fillRect(col * itemSize, offsetY + row * itemSize, itemSize, itemSize);
-        // 境界線の描画
-        ctx.strokeStyle = "#000";
-        ctx.strokeRect(col * itemSize, offsetY + row * itemSize, itemSize, itemSize);
-      });
-    }
+  }  
   
   // ヒストリー画像ダウンロード処理
   uiElements.downloadHistoryBtn.addEventListener('click', () => {
     // ヒストリー内の色ボックスをまとめたキャンバスを作成
-    const historyItems = uiElements.historyContainer.querySelectorAll('.color-box');
-    if (historyItems.length === 0) {
+    const colorDivs = uiElements.historyContainer.querySelectorAll('.color-box');
+    if (colorDivs.length === 0) {
       alert("ヒストリーに色がありません。");
       return;
     }
+    const downloadCanvas = document.createElement('canvas');
+    const downloadCtx = downloadCanvas.getContext('2d');
     // 選択されたオプションを取得
     const selectedOption = document.querySelector('input[name="history-download-option"]:checked').value;
-    if (selectedOption === "include") {
-      // 元画像付きでダウンロード
-      const downloadCanvas = document.createElement('canvas');
-      // キャンバスの高さは元画像とヒストリー領域の高さを合わせる
-      downloadCanvas.width = uiElements.canvas.width;
-      downloadCanvas.height = uiElements.canvas.height + uiElements.historyContainer.offsetHeight + 20;
-      const downloadCtx = downloadCanvas.getContext('2d');
+    const includeImage = selectedOption === "include";
+    const { width, height } = calculateCanvasSize(colorDivs.length, includeImage);
+    downloadCanvas.width = width;
+    downloadCanvas.height = height;
+    if (includeImage) {
+      // 元画像の下にカラーパレット情報を追加してダウンロード
+      downloadCtx.drawImage(App.img, 0, 0); // 元画像をキャンバスに描画
       
-      // 元画像を描画
-      downloadCtx.drawImage(img, 0, 0);
+      const yOffset = uiElements.canvas.height + 10;
+      drawColorBoxes(downloadCtx, colorDivs, yOffset);
       
-      // ヒストリーの色ボックスを元画像の下に描画
-      const itemSize = 40;  // 各色ボックスのサイズ
-      let yOffset = uiElements.canvas.height + 10;
-      historyItems.forEach((item, index) => {
-        const col = index % 10;
-        const row = Math.floor(index / 10);
-        downloadCtx.fillStyle = item.title;  // title 属性に hex 値を設定している
-        downloadCtx.fillRect(col * itemSize, yOffset + row * itemSize, itemSize, itemSize);
-        // 境界線描画
-        downloadCtx.strokeStyle = "#000";
-        downloadCtx.strokeRect(col * itemSize, yOffset + row * itemSize, itemSize, itemSize);
-      });
-      
-      const dataURL = downloadCanvas.toDataURL("image/png");
-      const a = document.createElement('a');
-      const now = new Date().toISOString();
-      a.download = `color_history_with_image_${now}.png`;
-      a.href = dataURL;
-      a.click();
-      
+      triggerDownload(downloadCanvas, "color_history_with_image_");
     } else {
       // ヒストリー情報のみでダウンロード
-      const downloadCanvas = document.createElement('canvas');
-      downloadCanvas.width = uiElements.historyContainer.offsetWidth;
-      downloadCanvas.height = uiElements.historyContainer.offsetHeight;
-      const downloadCtx = downloadCanvas.getContext('2d');
+      drawColorBoxes(downloadCtx, colorDivs);
       
-      const itemSize = 40;
-      historyItems.forEach((item, index) => {
-        const col = index % 10;
-        const row = Math.floor(index / 10);
-        downloadCtx.fillStyle = item.title;
-        downloadCtx.fillRect(col * itemSize, row * itemSize, itemSize, itemSize);
-      });
-      
-      const dataURL = downloadCanvas.toDataURL("image/png");
-      const a = document.createElement('a');
-      const now = new Date().toISOString();
-      a.download = `color_history_only_${now}.png`;
-      a.href = dataURL;
-      a.click();
+      triggerDownload(downloadCanvas, "color_history_only_");
     }
   });
   
     // パレットダウンロード処理
   uiElements.downloadPaletteBtn.addEventListener('click', () => {
     const selectedOption = document.querySelector('input[name="download-option"]:checked').value;
+    const colorDivs = uiElements.paletteContainer.querySelectorAll('.color-box');
+    const downloadCanvas = document.createElement('canvas');
+    const downloadCtx = downloadCanvas.getContext('2d');
     
-    if (selectedOption === "include") {
+    const includeImage = selectedOption === "include";
+    const { width, height } = calculateCanvasSize(colorDivs.length, includeImage);
+    downloadCanvas.width = width;
+    downloadCanvas.height = height;
+    if (includeImage) {
       // 元画像の下にカラーパレット情報を追加してダウンロード
-      const downloadCanvas = document.createElement('canvas');
-      downloadCanvas.width = uiElements.canvas.width;
-      downloadCanvas.height = uiElements.canvas.height + uiElements.paletteContainer.offsetHeight + 20;
-      const downloadCtx = downloadCanvas.getContext('2d');
+      downloadCtx.drawImage(App.img, 0, 0); // 元画像をキャンバスに描画
       
-      // 元画像をキャンバスに描画
-      downloadCtx.drawImage(img, 0, 0);
+      const yOffset = uiElements.canvas.height + 10;
+      drawColorBoxes(downloadCtx, colorDivs, yOffset);
       
-      // カラーパレット情報を描画
-      let yOffset = uiElements.canvas.height + 10;
-      const colorDivs = uiElements.paletteContainer.querySelectorAll('.color-box');
-      colorDivs.forEach((colorDiv, index) => {
-        const hex = colorDiv.style.backgroundColor;
-        downloadCtx.fillStyle = hex;
-        downloadCtx.fillRect(index % 16 * 40, yOffset + Math.floor(index / 16) * 40, 40, 40);
-      });
-      
-      // ダウンロード
-      const dataURL = downloadCanvas.toDataURL('image/png');
-      const a = document.createElement('a');
-      const now = new Date().toISOString();
-      a.download = `image_with_palette_${now}.png`;
-      a.href = dataURL;
-      a.click();
+      triggerDownload(downloadCanvas, "image_with_palette_");
     } else {
       // カラーパレット情報のみダウンロード
-      const downloadCanvas = document.createElement('canvas');
-      downloadCanvas.width = uiElements.paletteContainer.offsetWidth;
-      downloadCanvas.height = uiElements.paletteContainer.offsetHeight;
-      const downloadCtx = downloadCanvas.getContext('2d');
+      drawColorBoxes(downloadCtx, colorDivs);
       
-      // カラーパレット情報を描画
-      const colorDivs = uiElements.paletteContainer.querySelectorAll('.color-box');
-      colorDivs.forEach((colorDiv, index) => {
-        const hex = colorDiv.style.backgroundColor;
-        downloadCtx.fillStyle = hex;
-        downloadCtx.fillRect(index % 16 * 40, Math.floor(index / 16) * 40, 40, 40);
-      });
-      
-      // ダウンロード
-      const dataURL = downloadCanvas.toDataURL('image/png');
-      const a = document.createElement('a');
-      const now = new Date().toISOString();
-      a.download = `palette_only_${now}.png`;
-      a.href = dataURL;
-      a.click();
+      triggerDownload(downloadCanvas, "palette_only_");
     }
   });
+  const maxCols = 16; // 最大16列
+  const itemSize = 40; // 各ボックスのサイズ
+
+  // キャンバスサイズを事前計算する関数
+  const calculateCanvasSize = (totalItems, includeImage) => {
+    const numCols = Math.min(totalItems, maxCols); // 最大16列
+    const numRows = Math.ceil(totalItems / maxCols); // 必要な行数
+    
+    const width = numCols * itemSize;
+    const height = numRows * itemSize;
+    
+    return {
+      width: includeImage ? Math.max(uiElements.canvas.width, width) : width, // キャンバスサイズよりパレット数が多い場合は計算値を使用
+      height: includeImage ? uiElements.canvas.height + height + 20 : height
+    };
+  };
+
+  const drawColorBoxes = (ctx, colorDivs, yOffset = 0) => {
+    colorDivs.forEach((colorDiv, index) => {
+      ctx.fillStyle = colorDiv.style.backgroundColor;
+      ctx.fillRect((index % maxCols) * itemSize, yOffset + Math.floor(index / maxCols) * itemSize, itemSize, itemSize);
+    });
+  };
   
-    /**
-    * 一番上にスクロール機能
-    */
-    // スクロールイベントで「一番上にスクロール」ボタンの表示切替
+  // ダウンロード
+  const triggerDownload = (canvas, filePrefix = "download") => {
+    if (!canvas) {
+      console.error("Canvas is not provided.");
+      return;
+    }
+    
+    const dataURL = canvas.toDataURL("image/png");
+    const a = document.createElement("a");
+    a.download = `${filePrefix}_${new Date().toISOString()}.png`;
+    a.href = dataURL;
+    a.click();
+  };
+  
+  /**
+   * 一番上にスクロール機能
+  */
+  // スクロールイベントで「一番上にスクロール」ボタンの表示切替
   window.addEventListener('scroll', () => {
     // ヘッダーの高さ（この例では約80px）
     const headerHeight = 80;
@@ -878,7 +781,7 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
 
 /**
  * NamedColor クラスは、名前付きの色に関する情報とユーティリティ関数を提供します。
- * 主な機能として、HEX 値から色名の検索、最も近い色の探索、HEX 値の RGB 変換などを行います。
+ * HEX 値から色名の検索、最も近い色の探索を行います。
  */
 class NamedColor {
     /**
@@ -886,160 +789,56 @@ class NamedColor {
      * 各キーは色名を表し、対応する値は HEX 表記と RGB 配列を持つオブジェクトです。
      */
     static COLORS = {
-	"black": { hex: "#000000", rgb: [0, 0, 0] },
-	"silver": { hex: "#C0C0C0", rgb: [192, 192, 192] },
-	"gray": { hex: "#808080", rgb: [128, 128, 128] },
-	"white": { hex: "#FFFFFF", rgb: [255, 255, 255] },
-	"maroon": { hex: "#800000", rgb: [128, 0, 0] },
-	"red": { hex: "#FF0000", rgb: [255, 0, 0] },
-	"purple": { hex: "#800080", rgb: [128, 0, 128] },
-	"fuchsia": { hex: "#FF00FF", rgb: [255, 0, 255] },
-	"green": { hex: "#008000", rgb: [0, 128, 0] },
-	"lime": { hex: "#00FF00", rgb: [0, 255, 0] },
-	"olive": { hex: "#808000", rgb: [128, 128, 0] },
-	"yellow": { hex: "#FFFF00", rgb: [255, 255, 0] },
-	"navy": { hex: "#000080", rgb: [0, 0, 128] },
-	"blue": { hex: "#0000FF", rgb: [0, 0, 255] },
-	"teal": { hex: "#008080", rgb: [0, 128, 128] },
-	"aqua": { hex: "#00FFFF", rgb: [0, 255, 255] },
-	"aliceblue": { hex: "#f0f8ff", rgb: [240, 248, 255] },
-	"antiquewhite": { hex: "#faebd7", rgb: [250, 235, 215] },
-	"aquamarine": { hex: "#7fffd4", rgb: [127, 255, 212] },
-	"azure": { hex: "#f0ffff", rgb: [240, 255, 255] },
-	"beige": { hex: "#f5f5dc", rgb: [245, 245, 220] },
-	"bisque": { hex: "#ffe4c4", rgb: [255, 228, 196] },
-	"blanchedalmond": { hex: "#ffebcd", rgb: [255, 235, 205] },
-	"blueviolet": { hex: "#8a2be2", rgb: [138, 43, 226] },
-	"brown": { hex: "#a52a2a", rgb: [165, 42, 42] },
-	"burlywood": { hex: "#deb887", rgb: [222, 184, 135] },
-	"cadetblue": { hex: "#5f9ea0", rgb: [95, 158, 160] },
-	"chartreuse": { hex: "#7fff00", rgb: [127, 255, 0] },
-	"chocolate": { hex: "#d2691e", rgb: [210, 105, 30] },
-	"coral": { hex: "#ff7f50", rgb: [255, 127, 80] },
-	"cornflowerblue": { hex: "#6495ed", rgb: [100, 149, 237] },
-	"cornsilk": { hex: "#fff8dc", rgb: [255, 248, 220] },
-	"crimson": { hex: "#dc143c", rgb: [220, 20, 60] },
-	"cyan": { hex: "#00ffff", rgb: [0, 255, 255] },
-	"darkblue": { hex: "#00008b", rgb: [0, 0, 139] },
-	"darkcyan": { hex: "#008b8b", rgb: [0, 139, 139] },
-	"darkgoldenrod": { hex: "#b8860b", rgb: [184, 134, 11] },
-	"darkgray": { hex: "#a9a9a9", rgb: [169, 169, 169] },
-	"darkgreen": { hex: "#006400", rgb: [0, 100, 0] },
-	"darkgrey": { hex: "#a9a9a9", rgb: [169, 169, 169] },
-	"darkkhaki": { hex: "#bdb76b", rgb: [189, 183, 107] },
-	"darkmagenta": { hex: "#8b008b", rgb: [139, 0, 139] },
-	"darkolivegreen": { hex: "#556b2f", rgb: [85, 107, 47] },
-	"darkorange": { hex: "#ff8c00", rgb: [255, 140, 0] },
-	"darkorchid": { hex: "#9932cc", rgb: [153, 50, 204] },
-	"darkred": { hex: "#8b0000", rgb: [139, 0, 0] },
-	"darksalmon": { hex: "#e9967a", rgb: [233, 150, 122] },
-	"darkseagreen": { hex: "#8fbc8f", rgb: [143, 188, 143] },
-	"darkslateblue": { hex: "#483d8b", rgb: [72, 61, 139] },
-	"darkslategray": { hex: "#2f4f4f", rgb: [47, 79, 79] },
-	"darkslategrey": { hex: "#2f4f4f", rgb: [47, 79, 79] },
-	"darkturquoise": { hex: "#00ced1", rgb: [0, 206, 209] },
-	"darkviolet": { hex: "#9400d3", rgb: [148, 0, 211] },
-	"deeppink": { hex: "#ff1493", rgb: [255, 20, 147] },
-	"deepskyblue": { hex: "#00bfff", rgb: [0, 191, 255] },
-	"dimgray": { hex: "#696969", rgb: [105, 105, 105] },
-	"dimgrey": { hex: "#696969", rgb: [105, 105, 105] },
-	"dodgerblue": { hex: "#1e90ff", rgb: [30, 144, 255] },
-	"firebrick": { hex: "#b22222", rgb: [178, 34, 34] },
-	"floralwhite": { hex: "#fffaf0", rgb: [255, 250, 240] },
-	"forestgreen": { hex: "#228b22", rgb: [34, 139, 34] },
-	"gainsboro": { hex: "#dcdcdc", rgb: [220, 220, 220] },
-	"ghostwhite": { hex: "#f8f8ff", rgb: [248, 248, 255] },
-	"gold": { hex: "#ffd700", rgb: [255, 215, 0] },
-	"goldenrod": { hex: "#daa520", rgb: [218, 165, 32] },
-	"greenyellow": { hex: "#adff2f", rgb: [173, 255, 47] },
-	"grey": { hex: "#808080", rgb: [128, 128, 128] },
-	"honeydew": { hex: "#f0fff0", rgb: [240, 255, 240] },
-	"hotpink": { hex: "#ff69b4", rgb: [255, 105, 180] },
-	"indianred": { hex: "#cd5c5c", rgb: [205, 92, 92] },
-	"indigo": { hex: "#4b0082", rgb: [75, 0, 130] },
-	"ivory": { hex: "#fffff0", rgb: [255, 255, 240] },
-	"khaki": { hex: "#f0e68c", rgb: [240, 230, 140] },
-	"lavender": { hex: "#e6e6fa", rgb: [230, 230, 250] },
-	"lavenderblush": { hex: "#fff0f5", rgb: [255, 240, 245] },
-	"lawngreen": { hex: "#7cfc00", rgb: [124, 252, 0] },
-	"lemonchiffon": { hex: "#fffacd", rgb: [255, 250, 205] },
-	"lightblue": { hex: "#add8e6", rgb: [173, 216, 230] },
-	"lightcoral": { hex: "#f08080", rgb: [240, 128, 128] },
-	"lightcyan": { hex: "#e0ffff", rgb: [224, 255, 255] },
-	"lightgoldenrodyellow": { hex: "#fafad2", rgb: [250, 250, 210] },
-	"lightgray": { hex: "#d3d3d3", rgb: [211, 211, 211] },
-	"lightgreen": { hex: "#90ee90", rgb: [144, 238, 144] },
-	"lightgrey": { hex: "#d3d3d3", rgb: [211, 211, 211] },
-	"lightpink": { hex: "#ffb6c1", rgb: [255, 182, 193] },
-	"lightsalmon": { hex: "#ffa07a", rgb: [255, 160, 122] },
-	"lightseagreen": { hex: "#20b2aa", rgb: [32, 178, 170] },
-	"lightskyblue": { hex: "#87cefa", rgb: [135, 206, 250] },
-	"lightslategray": { hex: "#778899", rgb: [119, 136, 153] },
-	"lightslategrey": { hex: "#778899", rgb: [119, 136, 153] },
-	"lightsteelblue": { hex: "#b0c4de", rgb: [176, 196, 222] },
-	"lightyellow": { hex: "#ffffe0", rgb: [255, 255, 224] },
-	"limegreen": { hex: "#32cd32", rgb: [50, 205, 50] },
-	"linen": { hex: "#faf0e6", rgb: [250, 240, 230] },
-	"magenta": { hex: "#ff00ff", rgb: [255, 0, 255] },
-	"mediumaquamarine": { hex: "#66cdaa", rgb: [102, 205, 170] },
-	"mediumblue": { hex: "#0000cd", rgb: [0, 0, 205] },
-	"mediumorchid": { hex: "#ba55d3", rgb: [186, 85, 211] },
-	"mediumpurple": { hex: "#9370db", rgb: [147, 112, 219] },
-	"mediumseagreen": { hex: "#3cb371", rgb: [60, 179, 113] },
-	"mediumslateblue": { hex: "#7b68ee", rgb: [123, 104, 238] },
-	"mediumspringgreen": { hex: "#00fa9a", rgb: [0, 250, 154] },
-	"mediumturquoise": { hex: "#48d1cc", rgb: [72, 209, 204] },
-	"mediumvioletred": { hex: "#c71585", rgb: [199, 21, 133] },
-	"midnightblue": { hex: "#191970", rgb: [25, 25, 112] },
-	"mintcream": { hex: "#f5fffa", rgb: [245, 255, 250] },
-	"mistyrose": { hex: "#ffe4e1", rgb: [255, 228, 225] },
-	"moccasin": { hex: "#ffe4b5", rgb: [255, 228, 181] },
-	"navajowhite": { hex: "#ffdead", rgb: [255, 222, 173] },
-	"oldlace": { hex: "#fdf5e6", rgb: [253, 245, 230] },
-	"olivedrab": { hex: "#6b8e23", rgb: [107, 142, 35] },
-	"orange": { hex: "#ffa500", rgb: [255, 165, 0] },
-	"orangered": { hex: "#ff4500", rgb: [255, 69, 0] },
-	"orchid": { hex: "#da70d6", rgb: [218, 112, 214] },
-	"palegoldenrod": { hex: "#eee8aa", rgb: [238, 232, 170] },
-	"palegreen": { hex: "#98fb98", rgb: [152, 251, 152] },
-	"paleturquoise": { hex: "#afeeee", rgb: [175, 238, 238] },
-	"palevioletred": { hex: "#db7093", rgb: [219, 112, 147] },
-	"papayawhip": { hex: "#ffefd5", rgb: [255, 239, 213] },
-	"peachpuff": { hex: "#ffdab9", rgb: [255, 218, 185] },
-	"peru": { hex: "#cd853f", rgb: [205, 133, 63] },
-	"pink": { hex: "#ffc0cb", rgb: [255, 192, 203] },
-	"plum": { hex: "#dda0dd", rgb: [221, 160, 221] },
-	"powderblue": { hex: "#b0e0e6", rgb: [176, 224, 230] },
-	"rosybrown": { hex: "#bc8f8f", rgb: [188, 143, 143] },
-	"royalblue": { hex: "#4169e1", rgb: [65, 105, 225] },
-	"saddlebrown": { hex: "#8b4513", rgb: [139, 69, 19] },
-	"salmon": { hex: "#fa8072", rgb: [250, 128, 114] },
-	"sandybrown": { hex: "#f4a460", rgb: [244, 164, 96] },
-	"seagreen": { hex: "#2e8b57", rgb: [46, 139, 87] },
-	"seashell": { hex: "#fff5ee", rgb: [255, 245, 238] },
-	"sienna": { hex: "#a0522d", rgb: [160, 82, 45] },
-	"skyblue": { hex: "#87ceeb", rgb: [135, 206, 235] },
-	"slateblue": { hex: "#6a5acd", rgb: [106, 90, 205] },
-	"slategray": { hex: "#708090", rgb: [112, 128, 144] },
-	"slategrey": { hex: "#708090", rgb: [112, 128, 144] },
-	"snow": { hex: "#fffafa", rgb: [255, 250, 250] },
-	"springgreen": { hex: "#00ff7f", rgb: [0, 255, 127] },
-	"steelblue": { hex: "#4682b4", rgb: [70, 130, 180] },
-	"tan": { hex: "#d2b48c", rgb: [210, 180, 140] },
-	"thistle": { hex: "#d8bfd8", rgb: [216, 191, 216] },
-	"tomato": { hex: "#ff6347", rgb: [255, 99, 71] },
-	"turquoise": { hex: "#40e0d0", rgb: [64, 224, 208] },
-	"violet": { hex: "#ee82ee", rgb: [238, 130, 238] },
-	"wheat": { hex: "#f5deb3", rgb: [245, 222, 179] },
-	"whitesmoke": { hex: "#f5f5f5", rgb: [245, 245, 245] },
-	"yellowgreen": { hex: "#9acd32", rgb: [154, 205, 50] }
+"black": { hex: "#000000", rgb: [0, 0, 0] }, "silver": { hex: "#C0C0C0", rgb: [192, 192, 192] }, "gray": { hex: "#808080", rgb: [128, 128, 128] },
+"white": { hex: "#FFFFFF", rgb: [255, 255, 255] }, "maroon": { hex: "#800000", rgb: [128, 0, 0] }, "red": { hex: "#FF0000", rgb: [255, 0, 0] },
+"purple": { hex: "#800080", rgb: [128, 0, 128] }, "fuchsia": { hex: "#FF00FF", rgb: [255, 0, 255] }, "green": { hex: "#008000", rgb: [0, 128, 0] },
+"lime": { hex: "#00FF00", rgb: [0, 255, 0] }, "olive": { hex: "#808000", rgb: [128, 128, 0] }, "yellow": { hex: "#FFFF00", rgb: [255, 255, 0] },
+"navy": { hex: "#000080", rgb: [0, 0, 128] }, "blue": { hex: "#0000FF", rgb: [0, 0, 255] }, "teal": { hex: "#008080", rgb: [0, 128, 128] },
+"aqua": { hex: "#00FFFF", rgb: [0, 255, 255] }, "aliceblue": { hex: "#f0f8ff", rgb: [240, 248, 255] }, "antiquewhite": { hex: "#faebd7", rgb: [250, 235, 215] },
+"aquamarine": { hex: "#7fffd4", rgb: [127, 255, 212] }, "azure": { hex: "#f0ffff", rgb: [240, 255, 255] }, "beige": { hex: "#f5f5dc", rgb: [245, 245, 220] },
+"bisque": { hex: "#ffe4c4", rgb: [255, 228, 196] }, "blanchedalmond": { hex: "#ffebcd", rgb: [255, 235, 205] }, "blueviolet": { hex: "#8a2be2", rgb: [138, 43, 226] },
+"brown": { hex: "#a52a2a", rgb: [165, 42, 42] }, "burlywood": { hex: "#deb887", rgb: [222, 184, 135] }, "cadetblue": { hex: "#5f9ea0", rgb: [95, 158, 160] },
+"chartreuse": { hex: "#7fff00", rgb: [127, 255, 0] }, "chocolate": { hex: "#d2691e", rgb: [210, 105, 30] }, "coral": { hex: "#ff7f50", rgb: [255, 127, 80] },
+"cornflowerblue": { hex: "#6495ed", rgb: [100, 149, 237] }, "cornsilk": { hex: "#fff8dc", rgb: [255, 248, 220] }, "crimson": { hex: "#dc143c", rgb: [220, 20, 60] },
+"cyan": { hex: "#00ffff", rgb: [0, 255, 255] }, "darkblue": { hex: "#00008b", rgb: [0, 0, 139] }, "darkcyan": { hex: "#008b8b", rgb: [0, 139, 139] },
+"darkgoldenrod": { hex: "#b8860b", rgb: [184, 134, 11] }, "darkgray": { hex: "#a9a9a9", rgb: [169, 169, 169] }, "darkgreen": { hex: "#006400", rgb: [0, 100, 0] },
+"darkgrey": { hex: "#a9a9a9", rgb: [169, 169, 169] }, "darkkhaki": { hex: "#bdb76b", rgb: [189, 183, 107] }, "darkmagenta": { hex: "#8b008b", rgb: [139, 0, 139] },
+"darkolivegreen": { hex: "#556b2f", rgb: [85, 107, 47] }, "darkorange": { hex: "#ff8c00", rgb: [255, 140, 0] }, "darkorchid": { hex: "#9932cc", rgb: [153, 50, 204] },
+"darkred": { hex: "#8b0000", rgb: [139, 0, 0] }, "darksalmon": { hex: "#e9967a", rgb: [233, 150, 122] }, "darkseagreen": { hex: "#8fbc8f", rgb: [143, 188, 143] },
+"darkslateblue": { hex: "#483d8b", rgb: [72, 61, 139] }, "darkslategray": { hex: "#2f4f4f", rgb: [47, 79, 79] }, "darkslategrey": { hex: "#2f4f4f", rgb: [47, 79, 79] },
+"darkturquoise": { hex: "#00ced1", rgb: [0, 206, 209] }, "darkviolet": { hex: "#9400d3", rgb: [148, 0, 211] }, "deeppink": { hex: "#ff1493", rgb: [255, 20, 147] },
+"deepskyblue": { hex: "#00bfff", rgb: [0, 191, 255] }, "dimgray": { hex: "#696969", rgb: [105, 105, 105] }, "dimgrey": { hex: "#696969", rgb: [105, 105, 105] },
+"dodgerblue": { hex: "#1e90ff", rgb: [30, 144, 255] }, "firebrick": { hex: "#b22222", rgb: [178, 34, 34] }, "floralwhite": { hex: "#fffaf0", rgb: [255, 250, 240] },
+"forestgreen": { hex: "#228b22", rgb: [34, 139, 34] }, "gainsboro": { hex: "#dcdcdc", rgb: [220, 220, 220] }, "ghostwhite": { hex: "#f8f8ff", rgb: [248, 248, 255] },
+"gold": { hex: "#ffd700", rgb: [255, 215, 0] }, "goldenrod": { hex: "#daa520", rgb: [218, 165, 32] }, "greenyellow": { hex: "#adff2f", rgb: [173, 255, 47] },
+"grey": { hex: "#808080", rgb: [128, 128, 128] }, "honeydew": { hex: "#f0fff0", rgb: [240, 255, 240] }, "hotpink": { hex: "#ff69b4", rgb: [255, 105, 180] },
+"indianred": { hex: "#cd5c5c", rgb: [205, 92, 92] }, "indigo": { hex: "#4b0082", rgb: [75, 0, 130] }, "ivory": { hex: "#fffff0", rgb: [255, 255, 240] },
+"khaki": { hex: "#f0e68c", rgb: [240, 230, 140] }, "lavender": { hex: "#e6e6fa", rgb: [230, 230, 250] }, "lavenderblush": { hex: "#fff0f5", rgb: [255, 240, 245] },
+"lawngreen": { hex: "#7cfc00", rgb: [124, 252, 0] }, "lemonchiffon": { hex: "#fffacd", rgb: [255, 250, 205] }, "lightblue": { hex: "#add8e6", rgb: [173, 216, 230] },
+"lightcoral": { hex: "#f08080", rgb: [240, 128, 128] }, "lightcyan": { hex: "#e0ffff", rgb: [224, 255, 255] }, "lightgoldenrodyellow": { hex: "#fafad2", rgb: [250, 250, 210] },
+"lightgray": { hex: "#d3d3d3", rgb: [211, 211, 211] }, "lightgreen": { hex: "#90ee90", rgb: [144, 238, 144] }, "lightgrey": { hex: "#d3d3d3", rgb: [211, 211, 211] },
+"lightpink": { hex: "#ffb6c1", rgb: [255, 182, 193] }, "lightsalmon": { hex: "#ffa07a", rgb: [255, 160, 122] }, "lightseagreen": { hex: "#20b2aa", rgb: [32, 178, 170] },
+"lightskyblue": { hex: "#87cefa", rgb: [135, 206, 250] }, "lightslategray": { hex: "#778899", rgb: [119, 136, 153] }, "lightslategrey": { hex: "#778899", rgb: [119, 136, 153] },
+"lightsteelblue": { hex: "#b0c4de", rgb: [176, 196, 222] }, "lightyellow": { hex: "#ffffe0", rgb: [255, 255, 224] }, "limegreen": { hex: "#32cd32", rgb: [50, 205, 50] },
+"linen": { hex: "#faf0e6", rgb: [250, 240, 230] }, "magenta": { hex: "#ff00ff", rgb: [255, 0, 255] }, "mediumaquamarine": { hex: "#66cdaa", rgb: [102, 205, 170] },
+"mediumblue": { hex: "#0000cd", rgb: [0, 0, 205] }, "mediumorchid": { hex: "#ba55d3", rgb: [186, 85, 211] }, "mediumpurple": { hex: "#9370db", rgb: [147, 112, 219] },
+"mediumseagreen": { hex: "#3cb371", rgb: [60, 179, 113] }, "mediumslateblue": { hex: "#7b68ee", rgb: [123, 104, 238] }, "mediumspringgreen": { hex: "#00fa9a", rgb: [0, 250, 154] },
+"mediumturquoise": { hex: "#48d1cc", rgb: [72, 209, 204] }, "mediumvioletred": { hex: "#c71585", rgb: [199, 21, 133] }, "midnightblue": { hex: "#191970", rgb: [25, 25, 112] },
+"mintcream": { hex: "#f5fffa", rgb: [245, 255, 250] }, "mistyrose": { hex: "#ffe4e1", rgb: [255, 228, 225] }, "moccasin": { hex: "#ffe4b5", rgb: [255, 228, 181] },
+"navajowhite": { hex: "#ffdead", rgb: [255, 222, 173] }, "oldlace": { hex: "#fdf5e6", rgb: [253, 245, 230] }, "olivedrab": { hex: "#6b8e23", rgb: [107, 142, 35] },
+"orange": { hex: "#ffa500", rgb: [255, 165, 0] }, "orangered": { hex: "#ff4500", rgb: [255, 69, 0] }, "orchid": { hex: "#da70d6", rgb: [218, 112, 214] },
+"palegoldenrod": { hex: "#eee8aa", rgb: [238, 232, 170] }, "palegreen": { hex: "#98fb98", rgb: [152, 251, 152] }, "paleturquoise": { hex: "#afeeee", rgb: [175, 238, 238] },
+"palevioletred": { hex: "#db7093", rgb: [219, 112, 147] }, "papayawhip": { hex: "#ffefd5", rgb: [255, 239, 213] }, "peachpuff": { hex: "#ffdab9", rgb: [255, 218, 185] },
+"peru": { hex: "#cd853f", rgb: [205, 133, 63] }, "pink": { hex: "#ffc0cb", rgb: [255, 192, 203] }, "plum": { hex: "#dda0dd", rgb: [221, 160, 221] },
+"powderblue": { hex: "#b0e0e6", rgb: [176, 224, 230] }, "rosybrown": { hex: "#bc8f8f", rgb: [188, 143, 143] }, "royalblue": { hex: "#4169e1", rgb: [65, 105, 225] },
+"saddlebrown": { hex: "#8b4513", rgb: [139, 69, 19] }, "salmon": { hex: "#fa8072", rgb: [250, 128, 114] }, "sandybrown": { hex: "#f4a460", rgb: [244, 164, 96] },
+"seagreen": { hex: "#2e8b57", rgb: [46, 139, 87] }, "seashell": { hex: "#fff5ee", rgb: [255, 245, 238] }, "sienna": { hex: "#a0522d", rgb: [160, 82, 45] },
+"skyblue": { hex: "#87ceeb", rgb: [135, 206, 235] }, "slateblue": { hex: "#6a5acd", rgb: [106, 90, 205] }, "slategray": { hex: "#708090", rgb: [112, 128, 144] },
+"slategrey": { hex: "#708090", rgb: [112, 128, 144] }, "snow": { hex: "#fffafa", rgb: [255, 250, 250] }, "springgreen": { hex: "#00ff7f", rgb: [0, 255, 127] },
+"steelblue": { hex: "#4682b4", rgb: [70, 130, 180] }, "tan": { hex: "#d2b48c", rgb: [210, 180, 140] }, "thistle": { hex: "#d8bfd8", rgb: [216, 191, 216] },
+"tomato": { hex: "#ff6347", rgb: [255, 99, 71] }, "turquoise": { hex: "#40e0d0", rgb: [64, 224, 208] }, "violet": { hex: "#ee82ee", rgb: [238, 130, 238] },
+"wheat": { hex: "#f5deb3", rgb: [245, 222, 179] }, "whitesmoke": { hex: "#f5f5f5", rgb: [245, 245, 245] }, "yellowgreen": { hex: "#9acd32", rgb: [154, 205, 50] }
     };
-    // HEX 値から最も近い色名の結果をキャッシュする Map
-    // Map は挿入順を保持するので、最初の要素が最も古く使われたものとなります
-    static closestColorCache = new Map();
-    
-    // キャッシュの最大項目数を定義
-    static cacheLimit = 100;
     
     /**
      * 指定された HEX 値に完全一致する色名を返します。
@@ -1060,45 +859,28 @@ class NamedColor {
 
     /**
      * 指定された HEX 値に最も近い色の名前を返します。
-     * 色の近さは、RGB 各成分のユークリッド距離に基づいて計算されます。
+     * 色の近さは、Lab色空間で計算される距離に基づいています。
      * 入力 HEX 値が不正な場合は null を返します。
      *
      * @param {string} hex - 探索対象の HEX カラーコード（例: "#3f627e"）。
      * @returns {string|null} - 最も近い色の名前、もしくは null。
      */
     static findClosestHex(hex) {
-        const rgb = NamedColor.hexToRgb(hex);
-        if (!rgb) return null;
-        let closestColor = null;
-        let minDistance = Infinity;
-        for (const [name, color] of Object.entries(NamedColor.COLORS)) {
-            const distance = Math.sqrt(
-                Math.pow(rgb[0] - color.rgb[0], 2) +
-                Math.pow(rgb[1] - color.rgb[1], 2) +
-                Math.pow(rgb[2] - color.rgb[2], 2)
-            );
-            if (distance < minDistance) {
-                minDistance = distance;
-                closestColor = name;
-            }
+      const color = chroma(hex);  // 入力されたHEXカラー
+      if (!color) return null;
+
+      let closestColor = null;
+      let minDistance = Infinity;
+
+      for (const [name, namedColor] of Object.entries(NamedColor.COLORS)) {
+        const distance = chroma.distance(color, chroma(namedColor.hex), 'lab'); // Lab空間で距離を計算
+        if (distance < minDistance) {
+            minDistance = distance;
+            closestColor = name;
         }
-        
-        return closestColor;
-    }
-    /**
-     * HEX カラーコードを RGB 配列に変換します。
-     * 3桁の省略形もサポートします。
-     *
-     * @param {string} hex - 変換対象の HEX カラーコード（例: "#fff" や "#ffffff"）。
-     * @returns {number[]} - 変換された RGB 値の配列（例: [255, 255, 255]）。
-     */
-    static hexToRgb(hex) {
-        hex = hex.replace(/^#/, '');
-        if (hex.length === 3) {
-            hex = hex.split('').map(c => c + c).join('');
-        }
-        const bigint = parseInt(hex, 16);
-        return [(bigint >> 16) & 255, (bigint >> 8) & 255, bigint & 255];
+      }
+      
+      return closestColor;
     }
 }
 // src/main.js
@@ -1107,6 +889,58 @@ class NamedColor {
   // テーマ切替・初期表示処理
   // -------------------------------
   this.themeManager = new ThemeManager();
+
+  // ネット環境（httpsプロトコル）で実行されているかを判定
+  if (window.location.protocol === "https:") {
+     // ネット環境とローカル環境を区別しやすくするため変更
+     uiElements.version.classList.add("font-bold", "italic");
+  }
+// src/test-framework.js
+
+  class TestFramework {
+    /**
+     * モックオブジェクトを生成する
+     * @param {string} elementType - モック化する要素のタイプ
+     * @returns {Proxy} モックオブジェクト
+     */
+    static mock(elementType) {
+      return new Proxy({}, {
+        get: (target, prop) => {
+          // メソッド呼び出しを記録
+          return (...args) => {
+            console.log(`[TEST] ${elementType}.${prop} called with:`, args);
+            
+            // 基本的な検証機能
+            switch(prop) {
+              case 'addEventListener':
+                return { 
+                  remove: () => console.log(`[TEST] ${elementType} event listener removed`)
+                };
+              case 'click':
+                return true;
+            }
+            
+            return true;
+          };
+        }
+      });
+    }
+
+    /**
+     * テストケースを実行
+     * @param {string} name - テスト名
+     * @param {Function} testFn - テスト関数
+     */
+    static test(name, testFn) {
+      console.log(`\n--- Running test: ${name} ---`);
+      try {
+        testFn();
+        console.log(`[✅] ${name} - PASSED`);
+      } catch (error) {
+        console.error(`[❌] ${name} - FAILED: ${error.message}`);
+      }
+    }
+  }
 
   </script>
 </body>

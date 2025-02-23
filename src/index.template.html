@@ -2,10 +2,11 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>✨MagicPaletteAnalyzer - 画像から色を召喚する魔導具 ver 0.0.4</title>
+  <title>✨MagicPaletteAnalyzer - 画像から色を召喚する魔導具 ver 0.0.5</title>
   <meta name="viewport" content="initial-scale=1.0,width=device-width,viewport-fit=cover">
   <meta name="description"
   content="MagicPaletteAnalyzer - 画像に宿る色の精霊を可視化するカラーパレット生成ツール。瞳の色から風景まで、あらゆる画像を16色の魔方陣へ変換。術師のための色彩錬金術ツール。">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chroma-js/2.4.2/chroma.min.js"></script>
   <!-- Tailwind CSS CDN（簡易的な利用例） -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- TailwindCSSでdark modeを有効にするための設定例 -->
@@ -38,7 +39,30 @@
       pointer-events: none;
       transition: transform 0.1s ease-out;
     }
-  </style>
+  .sparkle {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: radial-gradient(circle, #fff, rgba(255,255,255,0));
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 50;
+    transform: translate(0, 0);
+    opacity: 1;
+    animation: sparkleAnim 600ms ease-out forwards;
+  }
+  @keyframes sparkleAnim {
+    0% {
+      transform: translate(0, 0) scale(1) rotate(0deg);
+      opacity: 1;
+    }
+    100% {
+      /* --dx, --dy で指定した方向へ移動しながら回転 */
+      transform: translate(var(--dx), var(--dy)) scale(0.5) rotate(360deg);
+      opacity: 0;
+    }
+  }
+ </style>
 </head>
 <body class="bg-gray-100 text-[#1a1a1a] dark:text-[#e0e0e0] mx-4 w-full dark:bg-gray-900">
   <!-- 固定ヘッダー -->
@@ -49,7 +73,7 @@
         <!-- タイトル -->
         <h1 class="text-2xl font-bold">MagicPaletteAnalyzer<span class="hidden md:inline">✨🎨🔍</span></h1>
         <!-- バージョン -->
-        <span class="text-sm text-gray-500 dark:text-white-500">ver 0.0.4</span>
+        <span id="version" class="text-sm">ver 0.0.5</span>
       </div>
       <div class="flex items-center gap-4">
         <!-- 使用方法（アコーディオン） -->
@@ -196,6 +220,7 @@ class="fixed bottom-8 right-8 bg-blue-500 text-[#e0e0e0] px-4 py-2 rounded shado
 </div>
   <!-- インライン JavaScript -->
   <script>
+    "use strict";
     <!-- INLINE_JS -->
   </script>
 </body>
