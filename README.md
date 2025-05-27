@@ -1,4 +1,5 @@
-# ✨MagicPaletteAnalyzer  
+# ✨MagicPaletteAnalyzer
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/haruharu-1105/MagicPaletteAnalyzer)  
 MagicPaletteAnalyzer - 画像から色を召喚する魔導具  
 画像から色を抽出し、カラーパレットを作成できる便利なツールです。  
 
